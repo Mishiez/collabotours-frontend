@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const navItems = [
   { label: 'Dashboard', path: '/dashboard', icon: '⊞' },
@@ -11,7 +11,20 @@ const navItems = [
   { label: 'Payments', path: '/payments', icon: '💳' },
 ];
 
+
 export default function Sidebar() {
+// Add this at the top of your Sidebar component
+useEffect(() => {
+    console.log('Sidebar mounted');
+    
+    // This will show you what's causing the renders
+    console.trace('Sidebar render trace');
+    
+    return () => console.log('Sidebar unmounted');
+  }, []);
+
+  const instanceId = Math.random().toString(36).slice(2, 8); // random short ID
+  console.log(`Sidebar rendered — instance: ${instanceId} — time: ${new Date().toLocaleTimeString()}`);
   const [collapsed, setCollapsed] = useState(false);
 
   return (
