@@ -4,9 +4,9 @@ import Sidebar from './Sidebar';
 
 export default function BusinessLayout() {
 
-  useEffect(() => {
-    console.log('BusinessLayout mounted/updated');
-  });
+//   useEffect(() => {
+//     console.log('BusinessLayout mounted/updated');
+//   });
 
 
   return (

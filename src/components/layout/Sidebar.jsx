@@ -14,14 +14,14 @@ const navItems = [
 
 export default function Sidebar() {
 // Add this at the top of your Sidebar component
-useEffect(() => {
-    console.log('Sidebar mounted');
+// useEffect(() => {
+//     console.log('Sidebar mounted');
     
-    // This will show you what's causing the renders
-    console.trace('Sidebar render trace');
+//     // This will show you what's causing the renders
+//     console.trace('Sidebar render trace');
     
-    return () => console.log('Sidebar unmounted');
-  }, []);
+//     return () => console.log('Sidebar unmounted');
+//   }, []);
 
   const instanceId = Math.random().toString(36).slice(2, 8); // random short ID
   console.log(`Sidebar rendered — instance: ${instanceId} — time: ${new Date().toLocaleTimeString()}`);
@@ -40,7 +40,7 @@ useEffect(() => {
         {!collapsed && (
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-[#EDAE49] flex items-center justify-center text-[#003D5B] font-black text-sm">T</div>
-            <span className="text-white font-bold text-lg tracking-tight">TouriBiz</span>
+            <span className="text-white font-bold text-lg tracking-tight">CollaboTours</span>
           </div>
         )}
         {collapsed && (
