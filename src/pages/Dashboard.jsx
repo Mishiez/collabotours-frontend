@@ -4,17 +4,17 @@ import Button from '../components/common/Button';
 
 const stats = [
   { title: 'Total Bookings', value: '1,284', change: '+12%', changeType: 'up', icon: '📅', accent: '#EDAE49' },
-  { title: 'Revenue', value: '$24,500', change: '+8%', changeType: 'up', icon: '💰', accent: '#00798C' },
+  { title: 'Revenue', value: 'Ksh24,500', change: '+8%', changeType: 'up', icon: '💰', accent: '#00798C' },
   { title: 'Active Services', value: '16', change: '+3', changeType: 'up', icon: '🧩', accent: '#30638E' },
   { title: 'Cancellations', value: '5', change: '-2%', changeType: 'down', icon: '❌', accent: '#D1495B' },
 ];
 
 const recentBookings = [
-  { id: '#BK-001', customer: 'Sarah Mitchell', service: 'Safari Day Tour', date: 'Feb 24, 2026', amount: '$320', status: 'confirmed' },
-  { id: '#BK-002', customer: 'James Omondi', service: 'Beach Getaway Package', date: 'Feb 25, 2026', amount: '$550', status: 'pending' },
-  { id: '#BK-003', customer: 'Aisha Kamau', service: 'Cultural City Walk', date: 'Feb 26, 2026', amount: '$80', status: 'confirmed' },
-  { id: '#BK-004', customer: 'Tom Weber', service: 'Sunset Cruise', date: 'Feb 27, 2026', amount: '$200', status: 'cancelled' },
-  { id: '#BK-005', customer: 'Priya Nair', service: 'Mountain Hiking Trip', date: 'Mar 1, 2026', amount: '$430', status: 'pending' },
+  { id: '#BK-001', customer: 'Sarah Mitchell', service: 'Safari Day Tour', date: 'Feb 24, 2026', amount: 'Ksh320', status: 'confirmed' },
+  { id: '#BK-002', customer: 'James Omondi', service: 'Beach Getaway Package', date: 'Feb 25, 2026', amount: 'Ksh550', status: 'pending' },
+  { id: '#BK-003', customer: 'Aisha Kamau', service: 'Cultural City Walk', date: 'Feb 26, 2026', amount: 'Ksh80', status: 'confirmed' },
+  { id: '#BK-004', customer: 'Tom Weber', service: 'Sunset Cruise', date: 'Feb 27, 2026', amount: 'Ksh200', status: 'cancelled' },
+  { id: '#BK-005', customer: 'Priya Nair', service: 'Mountain Hiking Trip', date: 'Mar 1, 2026', amount: 'Ksh430', status: 'pending' },
 ];
 
 const services = [

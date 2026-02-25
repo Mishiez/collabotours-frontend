@@ -1,4 +1,118 @@
-// Packages.jsx
+// // Packages.jsx
+// export default function Packages() {
+//   return <div className="p-8"><h1 className="text-2xl font-bold text-[#003D5B]">Packages</h1><p className="text-gray-400 mt-2">Coming soon...</p></div>;
+// }
+
+
+import { useState } from 'react';
+import Button from '../components/common/Button';
+
+const packages = [
+  {
+    id: 1,
+    name: 'Ultimate Safari Experience',
+    services: ['Safari Day Tour', 'Hot Air Balloon Ride', 'Cultural Visit'],
+    price: '899',
+    duration: '4 days',
+    bookings: 23,
+    status: 'active',
+    discount: '15%',
+  },
+  {
+    id: 2,
+    name: 'Beach & Culture Combo',
+    services: ['Beach Getaway Package', 'Cultural City Walk', 'Sunset Cruise'],
+    price: '749',
+    duration: '5 days',
+    bookings: 17,
+    status: 'active',
+    discount: '10%',
+  },
+  {
+    id: 3,
+    name: 'Adventure Week',
+    services: ['Mountain Hiking Trip', 'Safari Day Tour', 'Hot Air Balloon Ride'],
+    price: '1299',
+    duration: '7 days',
+    bookings: 8,
+    status: 'pending',
+    discount: '20%',
+  },
+];
+
 export default function Packages() {
-  return <div className="p-8"><h1 className="text-2xl font-bold text-[#003D5B]">Packages</h1><p className="text-gray-400 mt-2">Coming soon...</p></div>;
+  const [selectedPackage, setSelectedPackage] = useState(null);
+
+  return (
+    <div className="p-8 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-[#00798C] mb-1">
+            Package Deals
+          </p>
+          <h1 className="text-3xl font-bold text-[#003D5B]">Packages</h1>
+          <p className="text-gray-400 text-sm mt-1">Create and manage bundled service packages</p>
+        </div>
+        <Button variant="primary" size="md" icon="＋">Create Package</Button>
+      </div>
+
+      {/* Packages Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {packages.map((pkg) => (
+          <div key={pkg.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300">
+            {/* Package Header */}
+            <div className="bg-gradient-to-r from-[#003D5B] to-[#30638E] p-5 text-white">
+              <div className="flex justify-between items-start">
+                <h3 className="font-bold text-lg">{pkg.name}</h3>
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                  pkg.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-[#EDAE49]/20 text-[#EDAE49]'
+                }`}>
+                  {pkg.status}
+                </span>
+              </div>
+              <div className="flex items-center gap-4 mt-2 text-sm text-white/80">
+                <span>⏱️ {pkg.duration}</span>
+                <span>📅 {pkg.bookings} bookings</span>
+              </div>
+            </div>
+
+            {/* Package Content */}
+            <div className="p-5">
+              <div className="mb-4">
+                <p className="text-xs text-gray-400 mb-2">Included Services:</p>
+                <div className="flex flex-wrap gap-2">
+                  {pkg.services.map((service, index) => (
+                    <span key={index} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">
+                      {service}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Price & Discount */}
+              <div className="flex items-end justify-between mb-5">
+                <div>
+                  <p className="text-xs text-gray-400">Package Price</p>
+                  <p className="text-2xl font-bold text-[#EDAE49]">${pkg.price}</p>
+                </div>
+                {pkg.discount && (
+                  <div className="text-right">
+                    <p className="text-xs text-gray-400">You Save</p>
+                    <p className="text-sm font-semibold text-emerald-600">{pkg.discount}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="flex-1">Edit</Button>
+                <Button variant="primary" size="sm" className="flex-1">View Details</Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
