@@ -1,10 +1,16 @@
 import Button from './Button';
 
-export default function ServiceCard({ name, category, price, bookings, status, image }) {
+export default function ServiceCard({ id, name, category, price, bookings, status, image, onManage }) {
   const statusStyles = {
     active: 'bg-emerald-100 text-emerald-700',
     inactive: 'bg-gray-100 text-gray-500',
     pending: 'bg-[#EDAE49]/20 text-[#b87a00]',
+  };
+
+  const handleManageClick = () => {
+    if (onManage) {
+      onManage();
+    }
   };
 
   return (
@@ -39,7 +45,12 @@ export default function ServiceCard({ name, category, price, bookings, status, i
           </div>
         </div>
 
-        <Button variant="outline" size="sm" className="w-full justify-center">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="w-full justify-center"
+          onClick={handleManageClick}
+        >
           Manage Service
         </Button>
       </div>

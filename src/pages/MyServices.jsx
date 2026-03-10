@@ -1,11 +1,9 @@
-// // MyServices.jsx
-// export default function MyServices() {
-//   return <div className="p-8"><h1 className="text-2xl font-bold text-[#003D5B]">My Services</h1><p className="text-gray-400 mt-2">Coming soon...</p></div>;
-// }
-
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Button from '../components/common/Button';
 import ServiceCard from '../components/common/ServiceCard';
+import AddServiceModal from '../components/modals/AddServiceModal';
+import ManageServiceModal from '../components/modals/ManageServiceModal';
 
 // Mock data - will be replaced with API data later
 const allServices = [
@@ -75,19 +73,77 @@ const categories = ['All', 'Wildlife', 'Beach', 'Culture', 'Adventure', 'Water A
 const statusFilters = ['All', 'active', 'pending', 'inactive'];
 
 export default function MyServices() {
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [viewMode, setViewMode] = useState('grid');
+  
+  // Modal states
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState(null);
+  
+  // Services state (will be replaced with API data)
+  const [services, setServices] = useState(allServices);
 
   // Filter services based on category, status, and search
-  const filteredServices = allServices.filter(service => {
+  const filteredServices = services.filter(service => {
     const matchesCategory = selectedCategory === 'All' || service.category === selectedCategory;
     const matchesStatus = selectedStatus === 'All' || service.status === selectedStatus;
     const matchesSearch = service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          service.description.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesStatus && matchesSearch;
   });
+
+  // Handle adding new service
+  const handleAddService = (newService) => {
+    setServices(prev => [newService, ...prev]);
+  };
+
+  // Handle updating service
+  const handleUpdateService = (updatedService) => {
+    setServices(prev => 
+      prev.map(service => 
+        service.id === updatedService.id ? updatedService : service
+      )
+    );
+  };
+
+  // Handle deleting service
+  const handleDeleteService = (serviceId) => {
+    setServices(prev => prev.filter(service => service.id !== serviceId));
+  };
+
+  // Handle manage button click
+  const handleManageService = (service) => {
+    setSelectedService(service);
+    setIsManageModalOpen(true);
+  };
+
+  // Handle sort change
+  const handleSortChange = (e) => {
+    const sortValue = e.target.value;
+    let sortedServices = [...services];
+    
+    switch(sortValue) {
+      case 'price-low':
+        sortedServices.sort((a, b) => parseInt(a.price) - parseInt(b.price));
+        break;
+      case 'price-high':
+        sortedServices.sort((a, b) => parseInt(b.price) - parseInt(a.price));
+        break;
+      case 'most-booked':
+        sortedServices.sort((a, b) => b.bookings - a.bookings);
+        break;
+      case 'newest':
+      default:
+        sortedServices.sort((a, b) => b.id - a.id);
+        break;
+    }
+    
+    setServices(sortedServices);
+  };
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -103,7 +159,14 @@ export default function MyServices() {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="primary" size="md" icon="＋">Add New Service</Button>
+          <Button 
+            variant="primary" 
+            size="md" 
+            icon="＋"
+            onClick={() => setIsAddModalOpen(true)}
+          >
+            Add New Service
+          </Button>
           <Button variant="outline" size="md" icon="📊">Export</Button>
         </div>
       </div>
@@ -187,16 +250,19 @@ export default function MyServices() {
         </div>
       </div>
 
-      {/* Results count */}
+      {/* Results count and sort */}
       <div className="flex justify-between items-center mb-4">
         <p className="text-sm text-gray-500">
           Showing <span className="font-semibold text-[#003D5B]">{filteredServices.length}</span> services
         </p>
-        <select className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EDAE49]/20">
-          <option>Sort by: Newest</option>
-          <option>Sort by: Price: Low to High</option>
-          <option>Sort by: Price: High to Low</option>
-          <option>Sort by: Most Booked</option>
+        <select 
+          onChange={handleSortChange}
+          className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EDAE49]/20"
+        >
+          <option value="newest">Sort by: Newest</option>
+          <option value="price-low">Sort by: Price: Low to High</option>
+          <option value="price-high">Sort by: Price: High to Low</option>
+          <option value="most-booked">Sort by: Most Booked</option>
         </select>
       </div>
 
@@ -204,7 +270,11 @@ export default function MyServices() {
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {filteredServices.map((service) => (
-            <ServiceCard key={service.id} {...service} />
+            <ServiceCard 
+              key={service.id} 
+              {...service} 
+              onManage={() => handleManageService(service)}
+            />
           ))}
         </div>
       ) : (
@@ -239,13 +309,36 @@ export default function MyServices() {
                   </span>
                 </div>
                 <div className="col-span-1">
-                  <button className="text-gray-400 hover:text-[#003D5B] transition-colors">✎</button>
+                  <button 
+                    onClick={() => handleManageService(service)}
+                    className="text-gray-400 hover:text-[#003D5B] transition-colors"
+                  >
+                    ✎
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* Modals */}
+      <AddServiceModal 
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAdd={handleAddService}
+      />
+
+      <ManageServiceModal 
+        isOpen={isManageModalOpen}
+        onClose={() => {
+          setIsManageModalOpen(false);
+          setSelectedService(null);
+        }}
+        service={selectedService}
+        onUpdate={handleUpdateService}
+        onDelete={handleDeleteService}
+      />
     </div>
   );
 }
