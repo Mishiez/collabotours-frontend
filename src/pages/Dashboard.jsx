@@ -1,6 +1,7 @@
 import StatCard from '../components/common/StatCard';
 import ServiceCard from '../components/common/ServiceCard';
 import Button from '../components/common/Button';
+import { useNavigate } from 'react-router-dom';
 
 const stats = [
   { title: 'Total Bookings', value: '1,284', change: '+12%', changeType: 'up', icon: '📅', accent: '#EDAE49' },
@@ -30,6 +31,7 @@ const statusBadge = {
 };
 
 export default function Dashboard() {
+  const navigate = useNavigate();  // Add this line
   return (
     <div className="p-8 max-w-7xl mx-auto">
 
@@ -41,8 +43,8 @@ export default function Dashboard() {
           <p className="text-gray-400 text-sm mt-1">Monday, February 23, 2026</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" size="md" icon="🔔">Notifications</Button>
-          <Button variant="primary" size="md" icon="＋">Add Service</Button>
+          <Button variant="outline" size="md" icon="🔔" onClick={() => navigate('/messages')}>Notifications</Button>
+          {/* <Button variant="primary" size="md" icon="＋">Add Service</Button> */}
         </div>
       </div>
 
@@ -60,7 +62,7 @@ export default function Dashboard() {
         <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
             <h2 className="font-bold text-[#003D5B] text-base">Recent Bookings</h2>
-            <Button variant="ghost" size="sm">View all →</Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/bookings')}>View all →</Button>
           </div>
           <div className="divide-y divide-gray-50">
             {recentBookings.map((booking) => (
@@ -120,7 +122,7 @@ export default function Dashboard() {
               <span className="bg-[#EDAE49] text-[#003D5B] text-xs font-bold px-2 py-0.5 rounded-full">3 new</span>
             </div>
             <p className="text-white/60 text-xs mb-4">You have unread messages from potential collaborators.</p>
-            <Button variant="primary" size="sm" className="w-full justify-center">View Messages</Button>
+            <Button variant="primary" size="sm" className="w-full justify-center" onClick={() => navigate('/messages')}>View Messages</Button>
           </div>
         </div>
       </div>
@@ -129,7 +131,7 @@ export default function Dashboard() {
       <div>
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-bold text-[#003D5B] text-base">Top Services</h2>
-          <Button variant="ghost" size="sm">Manage all →</Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/services')}>Manage all →</Button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
           {services.map((service) => (
