@@ -1,7 +1,9 @@
+import { useState } from 'react'; // You already have this
+import { useNavigate } from 'react-router-dom';
 import StatCard from '../components/common/StatCard';
 import ServiceCard from '../components/common/ServiceCard';
 import Button from '../components/common/Button';
-import { useNavigate } from 'react-router-dom';
+import ManageServiceModal from '../components/modals/ManageServiceModal';
 
 const stats = [
   { title: 'Total Bookings', value: '1,284', change: '+12%', changeType: 'up', icon: '📅', accent: '#EDAE49' },
@@ -18,12 +20,7 @@ const recentBookings = [
   { id: '#BK-005', customer: 'Priya Nair', service: 'Mountain Hiking Trip', date: 'Mar 1, 2026', amount: 'Ksh430', status: 'pending' },
 ];
 
-const services = [
-  { name: 'Safari Day Tour', category: 'Wildlife', price: '280', bookings: 42, status: 'active' },
-  { name: 'Beach Getaway Package', category: 'Beach', price: '499', bookings: 28, status: 'active' },
-  { name: 'Cultural City Walk', category: 'Culture', price: '65', bookings: 61, status: 'active' },
-];
-
+// Move services into state - remove the const and move inside component
 const statusBadge = {
   confirmed: 'bg-emerald-100 text-emerald-700',
   pending: 'bg-[#EDAE49]/20 text-[#b87a00]',
@@ -31,7 +28,41 @@ const statusBadge = {
 };
 
 export default function Dashboard() {
-  const navigate = useNavigate();  // Add this line
+  const navigate = useNavigate();
+  
+  // Move services into state
+  const [services, setServices] = useState([
+    { id: 1, name: 'Safari Day Tour', category: 'Wildlife', price: '280', bookings: 42, status: 'active', description: 'Full day safari experience', location: 'Nairobi National Park' },
+    { id: 2, name: 'Beach Getaway Package', category: 'Beach', price: '499', bookings: 28, status: 'active', description: '3-day beach retreat', location: 'Diani Beach' },
+    { id: 3, name: 'Cultural City Walk', category: 'Culture', price: '65', bookings: 61, status: 'active', description: 'Guided tour through historic neighborhoods', location: 'Mombasa Old Town' },
+  ]);
+  
+  // Add state for manage modal
+  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState(null);
+
+  // Handle manage service click
+  const handleManageService = (service) => {
+    setSelectedService(service);
+    setIsManageModalOpen(true);
+  };
+
+  // Handle updating service
+  const handleUpdateService = (updatedService) => {
+    setServices(prevServices => 
+      prevServices.map(service => 
+        service.id === updatedService.id ? updatedService : service
+      )
+    );
+  };
+
+  // Handle deleting service
+  const handleDeleteService = (serviceId) => {
+    setServices(prevServices => 
+      prevServices.filter(service => service.id !== serviceId)
+    );
+  };
+
   return (
     <div className="p-8 max-w-7xl mx-auto">
 
@@ -135,11 +166,26 @@ export default function Dashboard() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
           {services.map((service) => (
-            <ServiceCard key={service.name} {...service} />
+            <ServiceCard 
+              key={service.id} 
+              {...service} 
+              onManage={() => handleManageService(service)}
+            />
           ))}
         </div>
       </div>
 
+      {/* Manage Service Modal */}
+      <ManageServiceModal 
+        isOpen={isManageModalOpen}
+        onClose={() => {
+          setIsManageModalOpen(false);
+          setSelectedService(null);
+        }}
+        service={selectedService}
+        onUpdate={handleUpdateService}
+        onDelete={handleDeleteService}
+      />
     </div>
   );
 }

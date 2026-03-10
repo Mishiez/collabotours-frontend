@@ -1,13 +1,9 @@
-// // Packages.jsx
-// export default function Packages() {
-//   return <div className="p-8"><h1 className="text-2xl font-bold text-[#003D5B]">Packages</h1><p className="text-gray-400 mt-2">Coming soon...</p></div>;
-// }
-
-
 import { useState } from 'react';
 import Button from '../components/common/Button';
+import AddPackageModal from '../components/modals/AddPackageModal';
+import ManagePackageModal from '../components/modals/ManagePackageModal';
 
-const packages = [
+const initialPackages = [
   {
     id: 1,
     name: 'Ultimate Safari Experience',
@@ -41,7 +37,43 @@ const packages = [
 ];
 
 export default function Packages() {
+  // Move packages into state
+  const [packages, setPackages] = useState(initialPackages);
+  
+  // Modal states
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState(null);
+
+  // Handle add new package
+  const handleAddPackage = (newPackage) => {
+    setPackages(prev => [newPackage, ...prev]);
+  };
+
+  // Handle update package
+  const handleUpdatePackage = (updatedPackage) => {
+    setPackages(prev => 
+      prev.map(pkg => pkg.id === updatedPackage.id ? updatedPackage : pkg)
+    );
+  };
+
+  // Handle delete package
+  const handleDeletePackage = (packageId) => {
+    setPackages(prev => prev.filter(pkg => pkg.id !== packageId));
+  };
+
+  // Handle edit click
+  const handleEditClick = (pkg) => {
+    setSelectedPackage(pkg);
+    setIsManageModalOpen(true);
+  };
+
+  // Handle view details click
+  const handleViewDetails = (pkg) => {
+    setSelectedPackage(pkg);
+    setIsManageModalOpen(true);
+    // You could set a different initial view if needed
+  };
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -54,7 +86,14 @@ export default function Packages() {
           <h1 className="text-3xl font-bold text-[#003D5B]">Packages</h1>
           <p className="text-gray-400 text-sm mt-1">Create and manage bundled service packages</p>
         </div>
-        <Button variant="primary" size="md" icon="＋">Create Package</Button>
+        <Button 
+          variant="primary" 
+          size="md" 
+          icon="＋"
+          onClick={() => setIsAddModalOpen(true)}
+        >
+          Create Package
+        </Button>
       </div>
 
       {/* Packages Grid */}
@@ -106,13 +145,45 @@ export default function Packages() {
 
               {/* Actions */}
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1">Edit</Button>
-                <Button variant="primary" size="sm" className="flex-1">View Details</Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleEditClick(pkg)}
+                >
+                  Edit
+                </Button>
+                <Button 
+                  variant="primary" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleViewDetails(pkg)}
+                >
+                  View Details
+                </Button>
               </div>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Modals */}
+      <AddPackageModal 
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAdd={handleAddPackage}
+      />
+
+      <ManagePackageModal 
+        isOpen={isManageModalOpen}
+        onClose={() => {
+          setIsManageModalOpen(false);
+          setSelectedPackage(null);
+        }}
+        package={selectedPackage}
+        onUpdate={handleUpdatePackage}
+        onDelete={handleDeletePackage}
+      />
     </div>
   );
 }

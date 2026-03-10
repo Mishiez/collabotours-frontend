@@ -1,12 +1,12 @@
-// // Bookings.jsx
-// export default function Bookings() {
-//   return <div className="p-8"><h1 className="text-2xl font-bold text-[#003D5B]">Bookings</h1><p className="text-gray-400 mt-2">Coming soon...</p></div>;
-// }
-
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Button from '../components/common/Button';
+import BookingDetailsModal from '../components/modals/BookingDetailsModal';
+import EditBookingModal from '../components/modals/EditBookingModal';
+import NewBookingModal from '../components/modals/NewBookingModal';
+import CalendarViewModel from '../components/modals/CalendarViewModel';
 
-const bookings = [
+const initialBookings = [
   {
     id: '#BK-001',
     customer: 'Sarah Mitchell',
@@ -66,12 +66,87 @@ const statusColors = {
 };
 
 export default function Bookings() {
+  const navigate = useNavigate();
+  
+  // State for bookings data
+  const [bookings, setBookings] = useState(initialBookings);
+  
+  // Filter states
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [dateRange, setDateRange] = useState('week');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [serviceFilter, setServiceFilter] = useState('All');
+  
+  // Modal states
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isNewBookingModalOpen, setIsNewBookingModalOpen] = useState(false);
+  const [isCalendarViewOpen, setIsCalendarViewOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
-  const filteredBookings = selectedStatus === 'All' 
-    ? bookings 
-    : bookings.filter(b => b.status === selectedStatus);
+  // Filter bookings
+  const filteredBookings = bookings.filter(booking => {
+    const matchesStatus = selectedStatus === 'All' || booking.status === selectedStatus;
+    const matchesSearch = booking.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         booking.id.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesService = serviceFilter === 'All' || booking.service === serviceFilter;
+    return matchesStatus && matchesSearch && matchesService;
+  });
+
+  // Get unique services for filter dropdown
+  const uniqueServices = ['All', ...new Set(bookings.map(b => b.service))];
+
+  // Pagination
+  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
+  const paginatedBookings = filteredBookings.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Handlers
+  const handleViewDetails = (booking) => {
+    setSelectedBooking(booking);
+    setIsDetailsModalOpen(true);
+  };
+
+  const handleEdit = (booking) => {
+    setSelectedBooking(booking);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateStatus = (bookingId, newStatus) => {
+    setBookings(prev => 
+      prev.map(booking => 
+        booking.id === bookingId ? { ...booking, status: newStatus } : booking
+      )
+    );
+  };
+
+  const handleUpdateBooking = (bookingId, updatedData) => {
+    setBookings(prev => 
+      prev.map(booking => 
+        booking.id === bookingId ? { ...booking, ...updatedData } : booking
+      )
+    );
+  };
+
+  const handleAddBooking = (newBooking) => {
+    setBookings(prev => [newBooking, ...prev]);
+  };
+
+  const handleStatCardClick = (status) => {
+    setSelectedStatus(status);
+  };
+
+  // Calculate stats
+  const totalBookings = bookings.length;
+  const pendingCount = bookings.filter(b => b.status === 'pending').length;
+  const confirmedCount = bookings.filter(b => b.status === 'confirmed').length;
+  const cancelledCount = bookings.filter(b => b.status === 'cancelled').length;
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -85,31 +160,57 @@ export default function Bookings() {
           <p className="text-gray-400 text-sm mt-1">Track and manage all customer bookings</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" size="md" icon="📅">Calendar View</Button>
-          <Button variant="primary" size="md" icon="＋">New Booking</Button>
+          <Button 
+            variant="outline" 
+            size="md" 
+            icon="📅"
+            onClick={() => setIsCalendarViewOpen(true)}
+          >
+            Calendar View
+          </Button>
+          <Button 
+            variant="primary" 
+            size="md" 
+            icon="＋"
+            onClick={() => setIsNewBookingModalOpen(true)}
+          >
+            New Booking
+          </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl p-4 border border-gray-100">
+        <div 
+          className="bg-white rounded-xl p-4 border border-gray-100 cursor-pointer hover:shadow-md transition-all"
+          onClick={() => handleStatCardClick('All')}
+        >
           <p className="text-xs text-gray-400 mb-1">Total Bookings</p>
-          <p className="text-2xl font-bold text-[#003D5B]">156</p>
+          <p className="text-2xl font-bold text-[#003D5B]">{totalBookings}</p>
           <span className="text-xs text-emerald-500">↑ 12% from last month</span>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-100">
+        <div 
+          className="bg-white rounded-xl p-4 border border-gray-100 cursor-pointer hover:shadow-md transition-all"
+          onClick={() => handleStatCardClick('pending')}
+        >
           <p className="text-xs text-gray-400 mb-1">Pending</p>
-          <p className="text-2xl font-bold text-[#EDAE49]">23</p>
+          <p className="text-2xl font-bold text-[#EDAE49]">{pendingCount}</p>
           <span className="text-xs text-gray-400">Need attention</span>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-100">
+        <div 
+          className="bg-white rounded-xl p-4 border border-gray-100 cursor-pointer hover:shadow-md transition-all"
+          onClick={() => handleStatCardClick('confirmed')}
+        >
           <p className="text-xs text-gray-400 mb-1">Confirmed</p>
-          <p className="text-2xl font-bold text-emerald-600">118</p>
+          <p className="text-2xl font-bold text-emerald-600">{confirmedCount}</p>
           <span className="text-xs text-gray-400">Ready to go</span>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-100">
+        <div 
+          className="bg-white rounded-xl p-4 border border-gray-100 cursor-pointer hover:shadow-md transition-all"
+          onClick={() => handleStatCardClick('cancelled')}
+        >
           <p className="text-xs text-gray-400 mb-1">Cancelled</p>
-          <p className="text-2xl font-bold text-[#D1495B]">15</p>
+          <p className="text-2xl font-bold text-[#D1495B]">{cancelledCount}</p>
           <span className="text-xs text-gray-400">This month</span>
         </div>
       </div>
@@ -120,15 +221,22 @@ export default function Bookings() {
           <div className="flex-1 min-w-[200px]">
             <input
               type="text"
-              placeholder="Search bookings..."
+              placeholder="Search bookings by customer or ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#EDAE49]/20"
             />
           </div>
-          <select className="px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#EDAE49]/20">
-            <option>Filter by service</option>
-            <option>Safari Tours</option>
-            <option>Beach Packages</option>
-            <option>City Walks</option>
+          <select 
+            value={serviceFilter}
+            onChange={(e) => setServiceFilter(e.target.value)}
+            className="px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#EDAE49]/20"
+          >
+            {uniqueServices.map(service => (
+              <option key={service} value={service}>
+                {service === 'All' ? 'All Services' : service}
+              </option>
+            ))}
           </select>
           <select 
             value={dateRange}
@@ -179,8 +287,12 @@ export default function Bookings() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredBookings.map((booking) => (
-                <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
+              {paginatedBookings.map((booking) => (
+                <tr 
+                  key={booking.id} 
+                  className="hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => handleViewDetails(booking)}
+                >
                   <td className="px-6 py-4 font-medium text-[#003D5B]">{booking.id}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
@@ -206,9 +318,19 @@ export default function Bookings() {
                       {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <button className="text-gray-400 hover:text-[#003D5B] transition-colors mr-3">👁️</button>
-                    <button className="text-gray-400 hover:text-[#003D5B] transition-colors">✎</button>
+                  <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                    <button 
+                      className="text-gray-400 hover:text-[#003D5B] transition-colors mr-3"
+                      onClick={() => handleViewDetails(booking)}
+                    >
+                      👁️
+                    </button>
+                    <button 
+                      className="text-gray-400 hover:text-[#003D5B] transition-colors"
+                      onClick={() => handleEdit(booking)}
+                    >
+                      ✎
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -218,16 +340,74 @@ export default function Bookings() {
         
         {/* Pagination */}
         <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-          <p className="text-sm text-gray-400">Showing 1-5 of 156 bookings</p>
+          <p className="text-sm text-gray-400">
+            Showing {((currentPage - 1) * itemsPerPage) + 1}-
+            {Math.min(currentPage * itemsPerPage, filteredBookings.length)} of {filteredBookings.length} bookings
+          </p>
           <div className="flex gap-2">
-            <button className="px-3 py-1 rounded-lg border border-gray-200 text-gray-400 hover:border-[#EDAE49] hover:text-[#EDAE49] transition-colors">←</button>
-            <button className="px-3 py-1 rounded-lg bg-[#003D5B] text-white">1</button>
-            <button className="px-3 py-1 rounded-lg border border-gray-200 text-gray-400 hover:border-[#EDAE49] hover:text-[#EDAE49] transition-colors">2</button>
-            <button className="px-3 py-1 rounded-lg border border-gray-200 text-gray-400 hover:border-[#EDAE49] hover:text-[#EDAE49] transition-colors">3</button>
-            <button className="px-3 py-1 rounded-lg border border-gray-200 text-gray-400 hover:border-[#EDAE49] hover:text-[#EDAE49] transition-colors">→</button>
+            <button 
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded-lg border border-gray-200 text-gray-400 hover:border-[#EDAE49] hover:text-[#EDAE49] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              ←
+            </button>
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`px-3 py-1 rounded-lg transition-colors ${
+                  currentPage === i + 1 
+                    ? 'bg-[#003D5B] text-white' 
+                    : 'border border-gray-200 text-gray-400 hover:border-[#EDAE49] hover:text-[#EDAE49]'
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button 
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 rounded-lg border border-gray-200 text-gray-400 hover:border-[#EDAE49] hover:text-[#EDAE49] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              →
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <BookingDetailsModal 
+        isOpen={isDetailsModalOpen}
+        onClose={() => {
+          setIsDetailsModalOpen(false);
+          setSelectedBooking(null);
+        }}
+        booking={selectedBooking}
+        onUpdateStatus={handleUpdateStatus}
+      />
+
+      <EditBookingModal 
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedBooking(null);
+        }}
+        booking={selectedBooking}
+        onUpdate={handleUpdateBooking}
+      />
+
+      <NewBookingModal 
+        isOpen={isNewBookingModalOpen}
+        onClose={() => setIsNewBookingModalOpen(false)}
+        onAdd={handleAddBooking}
+      />
+
+      <CalendarViewModel 
+        isOpen={isCalendarViewOpen}
+        onClose={() => setIsCalendarViewOpen(false)}
+        bookings={bookings}
+      />
     </div>
   );
 }
