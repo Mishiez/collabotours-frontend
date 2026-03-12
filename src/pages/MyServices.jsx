@@ -1,79 +1,85 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/common/Button';
 import ServiceCard from '../components/common/ServiceCard';
 import AddServiceModal from '../components/modals/AddServiceModal';
 import ManageServiceModal from '../components/modals/ManageServiceModal';
+import { fetchServices, createService, updateService, deleteService } from '../services/api';  // ADD THIS
 
 // Mock data - will be replaced with API data later
-const allServices = [
-  { 
-    id: 1,
-    name: 'Safari Day Tour', 
-    category: 'Wildlife', 
-    price: '280', 
-    bookings: 42, 
-    status: 'active',
-    description: 'Full day safari experience with lunch included',
-    location: 'Nairobi National Park'
-  },
-  { 
-    id: 2,
-    name: 'Beach Getaway Package', 
-    category: 'Beach', 
-    price: '499', 
-    bookings: 28, 
-    status: 'active',
-    description: '3-day beach retreat with luxury accommodation',
-    location: 'Diani Beach'
-  },
-  { 
-    id: 3,
-    name: 'Cultural City Walk', 
-    category: 'Culture', 
-    price: '65', 
-    bookings: 61, 
-    status: 'pending',
-    description: 'Guided tour through historic neighborhoods',
-    location: 'Mombasa Old Town'
-  },
-  { 
-    id: 4,
-    name: 'Sunset Cruise', 
-    category: 'Water Activities', 
-    price: '200', 
-    bookings: 15, 
-    status: 'inactive',
-    description: 'Evening cruise with dinner and drinks',
-    location: 'Lamu Island'
-  },
-  { 
-    id: 5,
-    name: 'Mountain Hiking Trip', 
-    category: 'Adventure', 
-    price: '430', 
-    bookings: 8, 
-    status: 'active',
-    description: '2-day guided hike with camping equipment',
-    location: 'Mount Kenya'
-  },
-  { 
-    id: 6,
-    name: 'Hot Air Balloon Ride', 
-    category: 'Adventure', 
-    price: '450', 
-    bookings: 12, 
-    status: 'pending',
-    description: 'Early morning balloon safari with champagne breakfast',
-    location: 'Masai Mara'
-  },
-];
+// const allServices = [
+//   { 
+//     id: 1,
+//     name: 'Safari Day Tour', 
+//     category: 'Wildlife', 
+//     price: '280', 
+//     bookings: 42, 
+//     status: 'active',
+//     description: 'Full day safari experience with lunch included',
+//     location: 'Nairobi National Park'
+//   },
+//   { 
+//     id: 2,
+//     name: 'Beach Getaway Package', 
+//     category: 'Beach', 
+//     price: '499', 
+//     bookings: 28, 
+//     status: 'active',
+//     description: '3-day beach retreat with luxury accommodation',
+//     location: 'Diani Beach'
+//   },
+//   { 
+//     id: 3,
+//     name: 'Cultural City Walk', 
+//     category: 'Culture', 
+//     price: '65', 
+//     bookings: 61, 
+//     status: 'pending',
+//     description: 'Guided tour through historic neighborhoods',
+//     location: 'Mombasa Old Town'
+//   },
+//   { 
+//     id: 4,
+//     name: 'Sunset Cruise', 
+//     category: 'Water Activities', 
+//     price: '200', 
+//     bookings: 15, 
+//     status: 'inactive',
+//     description: 'Evening cruise with dinner and drinks',
+//     location: 'Lamu Island'
+//   },
+//   { 
+//     id: 5,
+//     name: 'Mountain Hiking Trip', 
+//     category: 'Adventure', 
+//     price: '430', 
+//     bookings: 8, 
+//     status: 'active',
+//     description: '2-day guided hike with camping equipment',
+//     location: 'Mount Kenya'
+//   },
+//   { 
+//     id: 6,
+//     name: 'Hot Air Balloon Ride', 
+//     category: 'Adventure', 
+//     price: '450', 
+//     bookings: 12, 
+//     status: 'pending',
+//     description: 'Early morning balloon safari with champagne breakfast',
+//     location: 'Masai Mara'
+//   },
+// ];
 
 const categories = ['All', 'Wildlife', 'Beach', 'Culture', 'Adventure', 'Water Activities'];
 const statusFilters = ['All', 'active', 'pending', 'inactive'];
 
 export default function MyServices() {
-  const navigate = useNavigate();
+  // State for services data - starts empty!
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Filter states
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -83,9 +89,6 @@ export default function MyServices() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
-  
-  // Services state (will be replaced with API data)
-  const [services, setServices] = useState(allServices);
 
   // Filter services based on category, status, and search
   const filteredServices = services.filter(service => {
@@ -96,26 +99,72 @@ export default function MyServices() {
     return matchesCategory && matchesStatus && matchesSearch;
   });
 
+  // FETCH SERVICES FROM DJANGO WHEN PAGE LOADS
+  useEffect(() => {
+    loadServices();
+  }, []);
+
+  const loadServices = async () => {
+    try {
+      setLoading(true);
+      const response = await fetchServices();
+      console.log('Services loaded:', response.data);  // Check in console
+      setServices(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to load services:', err);
+      setError('Could not load services. Is the backend running?');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Handle adding new service
-  const handleAddService = (newService) => {
-    setServices(prev => [newService, ...prev]);
+  const handleAddService = async (newService) => {
+    console.log('Sending to backend:', newService);  // ADD THIS
+    try {
+      // Add the business ID (use 1 for safari_kenya, 2 for beach_paradise, etc.)
+      const serviceWithBusiness = {
+        ...newService,
+        business: 2  // ← ADD THIS LINE - using safari_kenya's ID(business: currentUser.id  // ← This will come from login)
+      };
+
+      const response = await createService(serviceWithBusiness);
+      console.log('Response:', response.data);       // ADD THIS
+      setServices(prev => [response.data, ...prev]);
+    } catch (err) {
+      console.error('Failed to add service:', err);
+      console.error('Error response:', err.response?.data);  // ADD THIS
+      alert('Failed to add service. Please try again.');
+    }
   };
 
   // Handle updating service
-  const handleUpdateService = (updatedService) => {
-    setServices(prev => 
-      prev.map(service => 
-        service.id === updatedService.id ? updatedService : service
-      )
-    );
-  };
-
+  const handleUpdateService = async (updatedService) => {
+    try {
+      const response = await updateService(updatedService.id, updatedService);
+      setServices(prev => 
+        prev.map(service => 
+          service.id === updatedService.id ? response.data : service
+        )
+      );
+    } catch (err) {
+      console.error('Failed to update service:', err);
+      alert('Failed to update service. Please try again.');
+    }
+  }
   // Handle deleting service
-  const handleDeleteService = (serviceId) => {
-    setServices(prev => prev.filter(service => service.id !== serviceId));
+  const handleDeleteService = async (serviceId) => {
+    try {
+      await deleteService(serviceId);
+      setServices(prev => prev.filter(service => service.id !== serviceId));
+    } catch (err) {
+      console.error('Failed to delete service:', err);
+      alert('Failed to delete service. Please try again.');
+    }
   };
 
-  // Handle manage button click
+  // Handle manage service button click
   const handleManageService = (service) => {
     setSelectedService(service);
     setIsManageModalOpen(true);
