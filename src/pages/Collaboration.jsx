@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/common/Button';
 import PartnerProfileModal from '../components/modals/PartnerProfileModal';
 import FindPartnersModal from '../components/modals/FindPartnersModal';
 import ApplyForOpportunityModal from '../components/modals/ApplyForOpportunityModal';
+import { fetchCollaborators } from '../services/api';
 
 // Move data into state inside component
 const initialCollaborators = [
@@ -63,7 +64,9 @@ export default function Collaboration() {
   const [activeTab, setActiveTab] = useState('partners');
   
   // State for data
-  const [collaborators, setCollaborators] = useState(initialCollaborators);
+  const [collaborators, setCollaborators] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [opportunities, setOpportunities] = useState(initialOpportunities);
   const [requests, setRequests] = useState([]);
   
@@ -73,6 +76,25 @@ export default function Collaboration() {
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [selectedOpportunity, setSelectedOpportunity] = useState(null);
+
+  // Fetch collaborators from backend
+  useEffect(() => {
+    loadCollaborators();
+  }, []);
+
+  const loadCollaborators = async () => {
+    try {
+      setLoading(true);
+      const response = await fetchCollaborators();
+      console.log('Collaborators loaded:', response.data);
+      setCollaborators(response.data);
+    } catch (err) {
+      console.error('Failed to load collaborators:', err);
+      setError('Could not load partners');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Handlers
   const handleViewProfile = (partner) => {

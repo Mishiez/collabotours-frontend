@@ -1,26 +1,11 @@
-import { useState } from 'react'; // You already have this
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StatCard from '../components/common/StatCard';
 import ServiceCard from '../components/common/ServiceCard';
 import Button from '../components/common/Button';
 import ManageServiceModal from '../components/modals/ManageServiceModal';
+import { fetchDashboardStats, fetchRecentBookings, fetchTopServices } from '../services/api';
 
-const stats = [
-  { title: 'Total Bookings', value: '1,284', change: '+12%', changeType: 'up', icon: '📅', accent: '#EDAE49' },
-  { title: 'Revenue', value: 'Ksh24,500', change: '+8%', changeType: 'up', icon: '💰', accent: '#00798C' },
-  { title: 'Active Services', value: '16', change: '+3', changeType: 'up', icon: '🧩', accent: '#30638E' },
-  { title: 'Cancellations', value: '5', change: '-2%', changeType: 'down', icon: '❌', accent: '#D1495B' },
-];
-
-const recentBookings = [
-  { id: '#BK-001', customer: 'Sarah Mitchell', service: 'Safari Day Tour', date: 'Feb 24, 2026', amount: 'Ksh320', status: 'confirmed' },
-  { id: '#BK-002', customer: 'James Omondi', service: 'Beach Getaway Package', date: 'Feb 25, 2026', amount: 'Ksh550', status: 'pending' },
-  { id: '#BK-003', customer: 'Aisha Kamau', service: 'Cultural City Walk', date: 'Feb 26, 2026', amount: 'Ksh80', status: 'confirmed' },
-  { id: '#BK-004', customer: 'Tom Weber', service: 'Sunset Cruise', date: 'Feb 27, 2026', amount: 'Ksh200', status: 'cancelled' },
-  { id: '#BK-005', customer: 'Priya Nair', service: 'Mountain Hiking Trip', date: 'Mar 1, 2026', amount: 'Ksh430', status: 'pending' },
-];
-
-// Move services into state - remove the const and move inside component
 const statusBadge = {
   confirmed: 'bg-emerald-100 text-emerald-700',
   pending: 'bg-[#EDAE49]/20 text-[#b87a00]',
@@ -30,16 +15,91 @@ const statusBadge = {
 export default function Dashboard() {
   const navigate = useNavigate();
   
-  // Move services into state
-  const [services, setServices] = useState([
-    { id: 1, name: 'Safari Day Tour', category: 'Wildlife', price: '280', bookings: 42, status: 'active', description: 'Full day safari experience', location: 'Nairobi National Park' },
-    { id: 2, name: 'Beach Getaway Package', category: 'Beach', price: '499', bookings: 28, status: 'active', description: '3-day beach retreat', location: 'Diani Beach' },
-    { id: 3, name: 'Cultural City Walk', category: 'Culture', price: '65', bookings: 61, status: 'active', description: 'Guided tour through historic neighborhoods', location: 'Mombasa Old Town' },
+  // State for dashboard data
+  const [stats, setStats] = useState([
+    { title: 'Total Bookings', value: '0', change: '+0%', changeType: 'up', icon: '📅', accent: '#EDAE49' },
+    { title: 'Revenue', value: 'Ksh0', change: '+0%', changeType: 'up', icon: '💰', accent: '#00798C' },
+    { title: 'Active Services', value: '0', change: '+0', changeType: 'up', icon: '🧩', accent: '#30638E' },
+    { title: 'Cancellations', value: '0', change: '0', changeType: 'down', icon: '❌', accent: '#D1495B' },
   ]);
   
-  // Add state for manage modal
+  const [recentBookings, setRecentBookings] = useState([]);
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Modal state
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
+
+  // Fetch dashboard data
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch all data in parallel
+      const [statsResponse, bookingsResponse, servicesResponse] = await Promise.all([
+        fetchDashboardStats(),
+        fetchRecentBookings(),
+        fetchTopServices()
+      ]);
+      
+      console.log('Dashboard stats:', statsResponse.data);
+      console.log('Recent bookings:', bookingsResponse.data);
+      console.log('Top services:', servicesResponse.data);
+      
+      // Update stats
+      const newStats = [
+        { 
+          title: 'Total Bookings', 
+          value: statsResponse.data.total_bookings?.toLocaleString() || '0', 
+          change: '+12%', 
+          changeType: 'up', 
+          icon: '📅', 
+          accent: '#EDAE49' 
+        },
+        { 
+          title: 'Revenue', 
+          value: statsResponse.data.total_revenue || 'Ksh0', 
+          change: '+8%', 
+          changeType: 'up', 
+          icon: '💰', 
+          accent: '#00798C' 
+        },
+        { 
+          title: 'Active Services', 
+          value: statsResponse.data.active_services?.toString() || '0', 
+          change: '+3', 
+          changeType: 'up', 
+          icon: '🧩', 
+          accent: '#30638E' 
+        },
+        { 
+          title: 'Cancellations', 
+          value: statsResponse.data.cancellations?.toString() || '0', 
+          change: '-2%', 
+          changeType: 'down', 
+          icon: '❌', 
+          accent: '#D1495B' 
+        },
+      ];
+      
+      setStats(newStats);
+      setRecentBookings(bookingsResponse.data);
+      setServices(servicesResponse.data);
+      setError(null);
+      
+    } catch (err) {
+      console.error('Failed to load dashboard data:', err);
+      setError('Could not load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Handle manage service click
   const handleManageService = (service) => {
@@ -63,6 +123,36 @@ export default function Dashboard() {
     );
   };
 
+  // Helper functions for formatting
+  const getInitials = (name) => {
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  };
+
+  const formatDate = (dateString) => {
+    const options = { month: 'short', day: 'numeric', year: 'numeric' };
+    return new Date(dateString).toLocaleDateString('en-US', options);
+  };
+
+  const formatAmount = (amount, currency = 'Ksh') => {
+    return `${currency}${parseFloat(amount).toFixed(0)}`;
+  };
+
+  if (loading) {
+    return (
+      <div className="p-8 max-w-7xl mx-auto flex items-center justify-center min-h-screen">
+        <p className="text-gray-400">Loading dashboard...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 max-w-7xl mx-auto flex items-center justify-center min-h-screen">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 max-w-7xl mx-auto">
 
@@ -71,11 +161,10 @@ export default function Dashboard() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-[#00798C] mb-1">Business Dashboard</p>
           <h1 className="text-3xl font-bold text-[#003D5B]">Good morning, Jane 👋</h1>
-          <p className="text-gray-400 text-sm mt-1">Monday, February 23, 2026</p>
+          <p className="text-gray-400 text-sm mt-1">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
         </div>
         <div className="flex gap-3">
           <Button variant="outline" size="md" icon="🔔" onClick={() => navigate('/messages')}>Notifications</Button>
-          {/* <Button variant="primary" size="md" icon="＋">Add Service</Button> */}
         </div>
       </div>
 
@@ -96,26 +185,34 @@ export default function Dashboard() {
             <Button variant="ghost" size="sm" onClick={() => navigate('/bookings')}>View all →</Button>
           </div>
           <div className="divide-y divide-gray-50">
-            {recentBookings.map((booking) => (
-              <div key={booking.id} className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="w-9 h-9 rounded-xl bg-[#003D5B]/10 flex items-center justify-center text-[#003D5B] font-bold text-xs">
-                    {booking.customer.split(' ').map(n => n[0]).join('')}
+            {recentBookings.length > 0 ? (
+              recentBookings.map((booking) => (
+                <div key={booking.id} className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-9 h-9 rounded-xl bg-[#003D5B]/10 flex items-center justify-center text-[#003D5B] font-bold text-xs">
+                      {getInitials(booking.customer)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[#003D5B]">{booking.customer}</p>
+                      <p className="text-xs text-gray-400">
+                        {typeof booking.service === 'object' ? booking.service.name : booking.service}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-[#003D5B]">{booking.customer}</p>
-                    <p className="text-xs text-gray-400">{booking.service}</p>
+                  <div className="text-right hidden sm:block">
+                    <p className="text-xs text-gray-400">{formatDate(booking.date)}</p>
+                    <p className="text-sm font-bold text-[#003D5B]">{formatAmount(booking.amount)}</p>
                   </div>
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ml-3 ${statusBadge[booking.status] || 'bg-gray-100 text-gray-500'}`}>
+                    {booking.status?.charAt(0).toUpperCase() + booking.status?.slice(1) || 'Unknown'}
+                  </span>
                 </div>
-                <div className="text-right hidden sm:block">
-                  <p className="text-xs text-gray-400">{booking.date}</p>
-                  <p className="text-sm font-bold text-[#003D5B]">{booking.amount}</p>
-                </div>
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ml-3 ${statusBadge[booking.status]}`}>
-                  {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                </span>
+              ))
+            ) : (
+              <div className="px-6 py-8 text-center text-gray-400">
+                No recent bookings found
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -165,13 +262,19 @@ export default function Dashboard() {
           <Button variant="ghost" size="sm" onClick={() => navigate('/services')}>Manage all →</Button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-          {services.map((service) => (
-            <ServiceCard 
-              key={service.id} 
-              {...service} 
-              onManage={() => handleManageService(service)}
-            />
-          ))}
+          {services.length > 0 ? (
+            services.map((service) => (
+              <ServiceCard 
+                key={service.id} 
+                {...service} 
+                onManage={() => handleManageService(service)}
+              />
+            ))
+          ) : (
+            <div className="col-span-3 text-center py-8 text-gray-400">
+              No services found
+            </div>
+          )}
         </div>
       </div>
 

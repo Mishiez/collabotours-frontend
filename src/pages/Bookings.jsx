@@ -1,63 +1,71 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/common/Button';
 import BookingDetailsModal from '../components/modals/BookingDetailsModal';
 import EditBookingModal from '../components/modals/EditBookingModal';
 import NewBookingModal from '../components/modals/NewBookingModal';
 import CalendarViewModel from '../components/modals/CalendarViewModel';
+import { 
+  fetchBookings, 
+  createBooking, 
+  updateBooking, 
+  updateBookingStatus,
+  deleteBooking,
+  fetchServices 
+} from '../services/api';
 
-const initialBookings = [
-  {
-    id: '#BK-001',
-    customer: 'Sarah Mitchell',
-    service: 'Safari Day Tour',
-    date: 'Feb 24, 2026',
-    time: '09:00 AM',
-    amount: '$320',
-    status: 'confirmed',
-    guests: 2,
-  },
-  {
-    id: '#BK-002',
-    customer: 'James Omondi',
-    service: 'Beach Getaway Package',
-    date: 'Feb 25, 2026',
-    time: '11:00 AM',
-    amount: '$550',
-    status: 'pending',
-    guests: 4,
-  },
-  {
-    id: '#BK-003',
-    customer: 'Aisha Kamau',
-    service: 'Cultural City Walk',
-    date: 'Feb 26, 2026',
-    time: '10:30 AM',
-    amount: '$80',
-    status: 'confirmed',
-    guests: 1,
-  },
-  {
-    id: '#BK-004',
-    customer: 'Tom Weber',
-    service: 'Sunset Cruise',
-    date: 'Feb 27, 2026',
-    time: '04:00 PM',
-    amount: '$200',
-    status: 'cancelled',
-    guests: 2,
-  },
-  {
-    id: '#BK-005',
-    customer: 'Priya Nair',
-    service: 'Mountain Hiking Trip',
-    date: 'Mar 1, 2026',
-    time: '07:00 AM',
-    amount: '$430',
-    status: 'pending',
-    guests: 3,
-  },
-];
+// const initialBookings = [
+//   {
+//     id: '#BK-001',
+//     customer: 'Sarah Mitchell',
+//     service: 'Safari Day Tour',
+//     date: 'Feb 24, 2026',
+//     time: '09:00 AM',
+//     amount: '$320',
+//     status: 'confirmed',
+//     guests: 2,
+//   },
+//   {
+//     id: '#BK-002',
+//     customer: 'James Omondi',
+//     service: 'Beach Getaway Package',
+//     date: 'Feb 25, 2026',
+//     time: '11:00 AM',
+//     amount: '$550',
+//     status: 'pending',
+//     guests: 4,
+//   },
+//   {
+//     id: '#BK-003',
+//     customer: 'Aisha Kamau',
+//     service: 'Cultural City Walk',
+//     date: 'Feb 26, 2026',
+//     time: '10:30 AM',
+//     amount: '$80',
+//     status: 'confirmed',
+//     guests: 1,
+//   },
+//   {
+//     id: '#BK-004',
+//     customer: 'Tom Weber',
+//     service: 'Sunset Cruise',
+//     date: 'Feb 27, 2026',
+//     time: '04:00 PM',
+//     amount: '$200',
+//     status: 'cancelled',
+//     guests: 2,
+//   },
+//   {
+//     id: '#BK-005',
+//     customer: 'Priya Nair',
+//     service: 'Mountain Hiking Trip',
+//     date: 'Mar 1, 2026',
+//     time: '07:00 AM',
+//     amount: '$430',
+//     status: 'pending',
+//     guests: 3,
+//   },
+// ];
 
 const statusColors = {
   confirmed: 'bg-emerald-100 text-emerald-700',
@@ -69,7 +77,9 @@ export default function Bookings() {
   const navigate = useNavigate();
   
   // State for bookings data
-  const [bookings, setBookings] = useState(initialBookings);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   // Filter states
   const [selectedStatus, setSelectedStatus] = useState('All');
@@ -88,6 +98,25 @@ export default function Bookings() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
+  // Fetch bookings from backend
+  useEffect(() => {
+    loadBookings();
+  }, []);
+
+  const loadBookings = async () => {
+    try {
+      setLoading(true);
+      const response = await fetchBookings();
+      console.log('Bookings loaded:', response.data);
+      setBookings(response.data);
+    } catch (err) {
+      console.error('Failed to load bookings:', err);
+      setError('Could not load bookings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Filter bookings
   const filteredBookings = bookings.filter(booking => {
     const matchesStatus = selectedStatus === 'All' || booking.status === selectedStatus;
@@ -98,7 +127,9 @@ export default function Bookings() {
   });
 
   // Get unique services for filter dropdown
-  const uniqueServices = ['All', ...new Set(bookings.map(b => b.service))];
+  const uniqueServices = ['All', ...new Set(bookings.map(b => 
+    typeof b.service === 'object' ? b.service.name : b.service
+  ))];
 
   // Pagination
   const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
@@ -118,24 +149,78 @@ export default function Bookings() {
     setIsEditModalOpen(true);
   };
 
-  const handleUpdateStatus = (bookingId, newStatus) => {
-    setBookings(prev => 
-      prev.map(booking => 
-        booking.id === bookingId ? { ...booking, status: newStatus } : booking
-      )
-    );
+  const handleUpdateStatus = async (bookingId, newStatus) => {
+    try {
+      await updateBookingStatus(bookingId, newStatus);
+      // Update local state
+      setBookings(prev => 
+        prev.map(booking => 
+          booking.id === bookingId ? { ...booking, status: newStatus } : booking
+        )
+      );
+    } catch (err) {
+      console.error('Failed to update status:', err);
+      alert('Failed to update status');
+    }
   };
 
-  const handleUpdateBooking = (bookingId, updatedData) => {
-    setBookings(prev => 
-      prev.map(booking => 
-        booking.id === bookingId ? { ...booking, ...updatedData } : booking
-      )
-    );
+  const handleUpdateBooking = async (bookingId, updatedData) => {
+    try {
+      const response = await updateBooking(bookingId, updatedData);
+      setBookings(prev => 
+        prev.map(booking => 
+          booking.id === bookingId ? response.data : booking
+        )
+      );
+    } catch (err) {
+      console.error('Failed to update booking:', err);
+      alert('Failed to update booking');
+    }
   };
 
-  const handleAddBooking = (newBooking) => {
-    setBookings(prev => [newBooking, ...prev]);
+  const handleAddBooking = async (newBooking) => {
+    try {
+      // First, get all services to find the ID for the selected service name
+      const servicesResponse = await fetchServices();
+      const services = servicesResponse.data;
+      
+      // DEBUG: Log what we got
+      console.log('All services from DB:', services);
+      console.log('Looking for service name:', newBooking.service);
+      
+      // Find the service ID that matches the selected service name
+      const selectedService = services.find(s => s.name === newBooking.service);
+      
+      if (!selectedService) {
+        alert('Selected service not found');
+        return;
+      }
+      
+      // Format the data properly for the backend
+      const bookingForBackend = {
+        customer: newBooking.customer,
+        service: selectedService.id,  // Send ID, not name!
+        date: newBooking.date,
+        time: newBooking.time,
+        guests: parseInt(newBooking.guests),  // Ensure it's a number
+        amount: parseFloat(newBooking.amount.replace('$', '')),  // Remove $ and convert to number
+        status: newBooking.status || 'pending',
+        // Don't send id - let backend generate it
+        // Don't send booking_id - let backend generate it
+      };
+      
+      console.log('Sending to backend:', bookingForBackend);
+      const response = await createBooking(bookingForBackend);
+      console.log('Booking created:', response.data);
+      
+      // Add the new booking to the list
+      setBookings(prev => [response.data, ...prev]);
+      
+    } catch (err) {
+      console.error('Failed to create booking:', err);
+      console.error('Error response:', err.response?.data);
+      alert('Failed to create booking. Please check your data and try again.');
+    }
   };
 
   const handleStatCardClick = (status) => {
@@ -302,7 +387,10 @@ export default function Bookings() {
                       <span className="font-medium">{booking.customer}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm">{booking.service}</td>
+                  {/* <td className="px-6 py-4 text-sm">{booking.service}</td> */}
+                  <td className="px-6 py-4 text-sm">
+                    {typeof booking.service === 'object' ? booking.service.name : booking.service}
+                  </td>
                   <td className="px-6 py-4">
                     <div>
                       <p className="text-sm font-medium">{booking.date}</p>

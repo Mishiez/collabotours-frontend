@@ -4,172 +4,182 @@ import MessageBubble from '../components/modals/MessageBubble';
 import TypingIndicator from '../components/modals/TypingIndicator';
 import NewMessageModal from '../components/modals/NewMessageModal';
 import ContactInfoModal from '../components/modals/ContactInfoModal';
-
-// Initial conversations data
-const initialConversations = [
-  {
-    id: 1,
-    name: 'Sarah Mitchell',
-    avatar: 'SM',
-    lastMessage: 'Hi, I was wondering if you have availability for the safari tour next week?',
-    time: '10:30 AM',
-    unread: 2,
-    online: true,
-    role: 'Customer',
-  },
-  {
-    id: 2,
-    name: 'James Omondi',
-    avatar: 'JO',
-    lastMessage: 'Thanks for the quick response! I\'d like to book the beach package.',
-    time: 'Yesterday',
-    unread: 0,
-    online: false,
-    role: 'Customer',
-  },
-  {
-    id: 3,
-    name: 'Savannah Guides Ltd',
-    avatar: 'SG',
-    lastMessage: 'We\'re interested in partnering for the upcoming high season.',
-    time: 'Yesterday',
-    unread: 1,
-    online: true,
-    role: 'Partner',
-  },
-  {
-    id: 4,
-    name: 'Aisha Kamau',
-    avatar: 'AK',
-    lastMessage: 'Can I change my booking date for the city walk?',
-    time: 'Mar 22',
-    unread: 0,
-    online: false,
-    role: 'Customer',
-  },
-];
-
-// Initial messages data
-const initialMessages = {
-  1: [
-    { id: 101, sender: 'them', text: 'Hi, I was wondering if you have availability for the safari tour next week?', time: '10:30 AM', status: 'read' },
-    { id: 102, sender: 'me', text: 'Hello Sarah! Yes, we have availability. Which date were you thinking?', time: '10:32 AM', status: 'read' },
-    { id: 103, sender: 'them', text: 'Great! Looking at March 15th for 2 people.', time: '10:33 AM', status: 'read' },
-    { id: 104, sender: 'them', text: 'Also, do you offer pickup from hotels?', time: '10:34 AM', status: 'read' },
-    { id: 105, sender: 'me', text: 'Yes, we provide complimentary pickup from most hotels in Nairobi.', time: '10:36 AM', status: 'delivered' },
-  ],
-  2: [
-    { id: 201, sender: 'them', text: 'Thanks for the quick response! I\'d like to book the beach package.', time: '2:15 PM', status: 'read' },
-    { id: 202, sender: 'me', text: 'Excellent choice! The beach package includes 3 nights at Diani Beach.', time: '2:17 PM', status: 'read' },
-  ],
-  3: [
-    { id: 301, sender: 'them', text: 'We\'re interested in partnering for the upcoming high season.', time: '11:20 AM', status: 'read' },
-    { id: 302, sender: 'me', text: 'That sounds interesting. What type of partnership did you have in mind?', time: '11:25 AM', status: 'read' },
-  ],
-};
+import { 
+  fetchConversations, 
+  sendMessage,
+  createConversation,
+} from '../services/api';
 
 export default function Messages() {
-  const [conversations, setConversations] = useState(initialConversations);
-  const [messages, setMessages] = useState(initialMessages);
-  const [selectedConversation, setSelectedConversation] = useState(conversations[0]);
+  const [conversations, setConversations] = useState([]);
+  const [messages, setMessages] = useState({});
+  const [selectedConversation, setSelectedConversation] = useState(null);
   const [messageInput, setMessageInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isNewMessageModalOpen, setIsNewMessageModalOpen] = useState(false);
   const [isContactInfoModalOpen, setIsContactInfoModalOpen] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
+  // Helper function to get conversation display name
+  const getConversationName = (conv) => {
+    if (conv.participants && conv.participants.length > 0) {
+      // Filter out the current user (assuming current user is ID 1 for now)
+      const otherParticipants = conv.participants.filter(p => p.id !== 1);
+      if (otherParticipants.length > 0) {
+        return otherParticipants.map(p => p.username).join(', ');
+      }
+      return conv.participants.map(p => p.username).join(', ');
+    }
+    return `Conversation ${conv.id}`;
+  };
+
+  // Helper function to get avatar initials
+  const getAvatarInitials = (conv) => {
+    const name = getConversationName(conv);
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  };
+
+  // Helper function to get last message
+  const getLastMessage = (conv) => {
+    if (conv.last_message) {
+      return conv.last_message.content;
+    }
+    if (conv.messages && conv.messages.length > 0) {
+      return conv.messages[conv.messages.length - 1].content;
+    }
+    return 'No messages yet';
+  };
+
+  // Helper function to get last message time
+  const getLastMessageTime = (conv) => {
+    if (conv.last_message) {
+      const date = new Date(conv.last_message.created_at);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    if (conv.messages && conv.messages.length > 0) {
+      const date = new Date(conv.messages[conv.messages.length - 1].created_at);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    return '';
+  };
+
+  // Helper function to get unread count
+  const getUnreadCount = (conv) => {
+    if (conv.unread_count !== undefined) return conv.unread_count;
+    if (conv.messages) {
+      return conv.messages.filter(m => !m.is_read && m.sender !== 1).length;
+    }
+    return 0;
+  };
+
   // Filter conversations based on search
-  const filteredConversations = conversations.filter(conv =>
-    conv.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredConversations = conversations.filter(conv => {
+    const convName = getConversationName(conv).toLowerCase();
+    const lastMessage = getLastMessage(conv).toLowerCase();
+    const searchLower = searchQuery.toLowerCase();
+    return convName.includes(searchLower) || lastMessage.includes(searchLower);
+  });
 
   // Scroll to bottom when messages change
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Fetch conversations from backend
+  useEffect(() => {
+    loadConversations();
+  }, []);
+
   useEffect(() => {
     scrollToBottom();
   }, [selectedConversation, messages]);
 
-  // Mark messages as read when conversation is opened
-  useEffect(() => {
-    if (selectedConversation && selectedConversation.unread > 0) {
-      // Clear unread count
-      setConversations(prev =>
-        prev.map(conv =>
-          conv.id === selectedConversation.id
-            ? { ...conv, unread: 0 }
-            : conv
-        )
-      );
+  const loadConversations = async () => {
+    try {
+      setLoading(true);
+      const response = await fetchConversations();
+      console.log('Conversations loaded:', response.data);
+      setConversations(response.data);
       
-      // Mark messages as read
-      setMessages(prev => ({
-        ...prev,
-        [selectedConversation.id]: prev[selectedConversation.id]?.map(msg =>
-          msg.sender === 'them' ? { ...msg, status: 'read' } : msg
-        )
-      }));
+      // Load messages for each conversation
+      const messagesMap = {};
+      for (const conv of response.data) {
+        if (conv.messages) {
+          messagesMap[conv.id] = conv.messages;
+        }
+      }
+      setMessages(messagesMap);
+      
+      // Select first conversation if available
+      if (response.data.length > 0) {
+        setSelectedConversation(response.data[0]);
+      }
+    } catch (err) {
+      console.error('Failed to load conversations:', err);
+      setError('Could not load conversations');
+    } finally {
+      setLoading(false);
     }
-  }, [selectedConversation]);
+  };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!messageInput.trim() || !selectedConversation) return;
 
+    const tempId = Date.now();
     const newMessage = {
-      id: Date.now(),
+      id: tempId,
       sender: 'me',
+      sender_id: 1, // Assuming current user is ID 1
       text: messageInput,
+      content: messageInput,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      status: 'sent',
+      created_at: new Date().toISOString(),
+      status: 'sending',
     };
 
-    // Add message to conversation
+    // Optimistically add to UI
     setMessages(prev => ({
       ...prev,
       [selectedConversation.id]: [...(prev[selectedConversation.id] || []), newMessage]
     }));
 
-    // Update last message in conversations list
-    setConversations(prev =>
-      prev.map(conv =>
-        conv.id === selectedConversation.id
-          ? { ...conv, lastMessage: messageInput, time: 'Just now' }
-          : conv
-      )
-    );
-
     setMessageInput('');
 
-    // Simulate typing indicator and reply (for demo)
-    setTimeout(() => {
-      setIsTyping(true);
-      scrollToBottom();
-    }, 1000);
-
-    setTimeout(() => {
-      setIsTyping(false);
+    try {
+      const response = await sendMessage(selectedConversation.id, messageInput);
       
-      const reply = {
-        id: Date.now() + 1,
-        sender: 'them',
-        text: 'Thanks for your message! I\'ll get back to you shortly.',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        status: 'delivered',
-      };
-      
+      // Replace temp message with real one
       setMessages(prev => ({
         ...prev,
-        [selectedConversation.id]: [...(prev[selectedConversation.id] || []), reply]
+        [selectedConversation.id]: prev[selectedConversation.id].map(msg =>
+          msg.id === tempId ? response.data : msg
+        )
       }));
+
+      // Update conversations list
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.id === selectedConversation.id
+            ? { ...conv, last_message: response.data }
+            : conv
+        )
+      );
       
-      scrollToBottom();
-    }, 3000);
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      // Mark as failed
+      setMessages(prev => ({
+        ...prev,
+        [selectedConversation.id]: prev[selectedConversation.id].map(msg =>
+          msg.id === tempId ? { ...msg, status: 'failed' } : msg
+        )
+      }));
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -179,40 +189,52 @@ export default function Messages() {
     }
   };
 
-  const handleStartConversation = ({ contact, firstMessage }) => {
-    const newConv = {
-      id: Date.now(),
-      name: contact.name,
-      avatar: contact.avatar,
-      lastMessage: firstMessage,
-      time: 'Just now',
-      unread: 0,
-      online: contact.lastActive === 'Online',
-      role: contact.role,
-    };
-
-    setConversations(prev => [newConv, ...prev]);
-    
-    setMessages(prev => ({
-      ...prev,
-      [newConv.id]: [
-        {
-          id: Date.now(),
-          sender: 'me',
-          text: firstMessage,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          status: 'sent',
-        }
-      ]
-    }));
-
-    setSelectedConversation(newConv);
+  const handleStartConversation = async ({ contact, firstMessage }) => {
+    try {
+      // Create conversation with participant
+      const participantIds = [1, contact.id]; // Assuming current user is 1
+      const convResponse = await createConversation(participantIds);
+      const newConv = convResponse.data;
+      
+      // Send first message
+      const msgResponse = await sendMessage(newConv.id, firstMessage);
+      
+      // Add to conversations list
+      setConversations(prev => [newConv, ...prev]);
+      
+      // Add message to messages map
+      setMessages(prev => ({
+        ...prev,
+        [newConv.id]: [msgResponse.data]
+      }));
+      
+      setSelectedConversation(newConv);
+      
+    } catch (err) {
+      console.error('Failed to start conversation:', err);
+      alert('Failed to start conversation');
+    }
   };
 
   const handleAttachFile = () => {
-    // In a real app, this would open file picker
     alert('File attachment coming soon!');
   };
+
+  if (loading) {
+    return (
+      <div className="p-8 max-w-7xl mx-auto h-[calc(100vh-5rem)] flex items-center justify-center">
+        <p className="text-gray-400">Loading conversations...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 max-w-7xl mx-auto h-[calc(100vh-5rem)] flex items-center justify-center">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 max-w-7xl mx-auto h-[calc(100vh-5rem)]">
@@ -252,37 +274,43 @@ export default function Messages() {
           {/* Conversations */}
           <div className="flex-1 overflow-y-auto">
             {filteredConversations.length > 0 ? (
-              filteredConversations.map((conv) => (
-                <button
-                  key={conv.id}
-                  onClick={() => setSelectedConversation(conv)}
-                  className={`w-full p-4 flex items-start gap-3 hover:bg-gray-50 transition-colors border-b border-gray-50 ${
-                    selectedConversation?.id === conv.id ? 'bg-[#EDAE49]/5' : ''
-                  }`}
-                >
-                  <div className="relative">
-                    <div className="w-12 h-12 rounded-xl bg-[#003D5B] flex items-center justify-center text-white font-bold text-sm">
-                      {conv.avatar}
+              filteredConversations.map((conv) => {
+                const unreadCount = getUnreadCount(conv);
+                return (
+                  <button
+                    key={conv.id}
+                    onClick={() => setSelectedConversation(conv)}
+                    className={`w-full p-4 flex items-start gap-3 hover:bg-gray-50 transition-colors border-b border-gray-50 ${
+                      selectedConversation?.id === conv.id ? 'bg-[#EDAE49]/5' : ''
+                    }`}
+                  >
+                    <div className="relative">
+                      <div className="w-12 h-12 rounded-xl bg-[#003D5B] flex items-center justify-center text-white font-bold text-sm">
+                        {getAvatarInitials(conv)}
+                      </div>
+                      {/* Online status - you'd need to track this separately */}
                     </div>
-                    {conv.online && (
-                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white"></div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start mb-1">
+                        <h3 className="font-semibold text-[#003D5B] truncate">
+                          {getConversationName(conv)}
+                        </h3>
+                        <span className="text-xs text-gray-400 whitespace-nowrap ml-2">
+                          {getLastMessageTime(conv)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 truncate">
+                        {getLastMessage(conv)}
+                      </p>
+                    </div>
+                    {unreadCount > 0 && (
+                      <div className="w-5 h-5 rounded-full bg-[#EDAE49] text-[#003D5B] text-xs font-bold flex items-center justify-center">
+                        {unreadCount}
+                      </div>
                     )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className="font-semibold text-[#003D5B] truncate">{conv.name}</h3>
-                      <span className="text-xs text-gray-400 whitespace-nowrap ml-2">{conv.time}</span>
-                    </div>
-                    <p className="text-xs text-gray-400 mb-1">{conv.role}</p>
-                    <p className="text-xs text-gray-600 truncate">{conv.lastMessage}</p>
-                  </div>
-                  {conv.unread > 0 && (
-                    <div className="w-5 h-5 rounded-full bg-[#EDAE49] text-[#003D5B] text-xs font-bold flex items-center justify-center">
-                      {conv.unread}
-                    </div>
-                  )}
-                </button>
-              ))
+                  </button>
+                );
+              })
             ) : (
               <div className="p-8 text-center">
                 <p className="text-sm text-gray-400">No conversations found</p>
@@ -299,15 +327,13 @@ export default function Messages() {
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <div className="w-10 h-10 rounded-xl bg-[#003D5B] flex items-center justify-center text-white font-bold text-sm">
-                    {selectedConversation.avatar}
+                    {getAvatarInitials(selectedConversation)}
                   </div>
-                  {selectedConversation.online && (
-                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white"></div>
-                  )}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-[#003D5B]">{selectedConversation.name}</h3>
-                  <p className="text-xs text-gray-400">{selectedConversation.role}</p>
+                  <h3 className="font-semibold text-[#003D5B]">
+                    {getConversationName(selectedConversation)}
+                  </h3>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -331,10 +357,10 @@ export default function Messages() {
               {messages[selectedConversation.id]?.map((msg) => (
                 <MessageBubble
                   key={msg.id}
-                  message={msg.text}
-                  isMine={msg.sender === 'me'}
-                  timestamp={msg.time}
-                  status={msg.status}
+                  message={msg.content || msg.text}
+                  isMine={msg.sender === 1 || msg.sender === 'me'}
+                  timestamp={new Date(msg.created_at || msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  status={msg.status || (msg.is_read ? 'read' : 'delivered')}
                 />
               ))}
               

@@ -18,6 +18,14 @@ export default function BookingDetailsModal({ isOpen, onClose, booking, onUpdate
     setShowStatusMenu(false);
   };
 
+  // Format the booking ID for display
+  const displayBookingId = booking.booking_id || `#BK-${String(booking.id).padStart(3, '0')}`;
+  
+  // Format transaction ID safely
+  const transactionId = booking.booking_id 
+    ? booking.booking_id.slice(4) 
+    : String(booking.id).padStart(6, '0');
+
   // Mock timeline data
   const timeline = [
     { action: 'Booking created', time: 'Feb 20, 2026 - 10:30 AM', status: 'completed' },
@@ -33,7 +41,7 @@ export default function BookingDetailsModal({ isOpen, onClose, booking, onUpdate
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs text-gray-400">Booking ID</p>
-            <p className="text-xl font-bold text-[#003D5B]">{booking.id}</p>
+            <p className="text-xl font-bold text-[#003D5B]">{displayBookingId}</p>
           </div>
           <div className="relative">
             <button
@@ -67,7 +75,7 @@ export default function BookingDetailsModal({ isOpen, onClose, booking, onUpdate
           <h3 className="font-semibold text-[#003D5B] mb-3">Customer Information</h3>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-[#003D5B] flex items-center justify-center text-white font-bold text-lg">
-              {booking.customer.split(' ').map(n => n[0]).join('')}
+              {booking.customer?.split(' ').map(n => n[0]).join('') || '?'}
             </div>
             <div>
               <p className="font-bold text-[#003D5B]">{booking.customer}</p>
@@ -81,7 +89,9 @@ export default function BookingDetailsModal({ isOpen, onClose, booking, onUpdate
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-gray-50 p-3 rounded-xl">
             <p className="text-xs text-gray-400">Service</p>
-            <p className="font-semibold text-[#003D5B]">{booking.service}</p>
+            <p className="font-semibold text-[#003D5B]">
+              {typeof booking.service === 'object' ? booking.service.name : booking.service}
+            </p>
           </div>
           <div className="bg-gray-50 p-3 rounded-xl">
             <p className="text-xs text-gray-400">Date & Time</p>
@@ -104,7 +114,7 @@ export default function BookingDetailsModal({ isOpen, onClose, booking, onUpdate
             <p className="text-gray-500">Payment Method:</p>
             <p className="font-medium text-[#003D5B]">Credit Card</p>
             <p className="text-gray-500">Transaction ID:</p>
-            <p className="font-medium text-[#003D5B]">TXN-{booking.id.slice(4)}</p>
+            <p className="font-medium text-[#003D5B]">TXN-{transactionId}</p>
             <p className="text-gray-500">Payment Status:</p>
             <p className="font-medium text-emerald-600">Paid</p>
           </div>

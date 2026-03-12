@@ -6,8 +6,8 @@ export default function AddPackageModal({ isOpen, onClose, onAdd }) {
     // Add default values
     const newPackage = {
       ...formData,
-      bookings: 0,
-      id: Date.now() // temporary ID
+      // bookings: 0,
+      // id: Date.now() // temporary ID
     };
     
     onAdd(newPackage);

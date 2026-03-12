@@ -1,71 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Button from '../components/common/Button';
 import PayoutModal from '../components/modals/PayoutModal';
 import PaymentDetailsModal from '../components/modals/PaymentDetailsModal';
 import ExportModal from '../components/modals/ExportModal';
-
-const initialPayments = [
-  {
-    id: '#PAY-001',
-    customer: 'Sarah Mitchell',
-    service: 'Safari Day Tour',
-    date: 'Feb 24, 2026',
-    amount: '$320',
-    status: 'completed',
-    method: 'Credit Card',
-    transactionId: 'TXN-123456',
-  },
-  {
-    id: '#PAY-002',
-    customer: 'James Omondi',
-    service: 'Beach Getaway Package',
-    date: 'Feb 25, 2026',
-    amount: '$550',
-    status: 'pending',
-    method: 'Bank Transfer',
-    transactionId: 'TXN-123457',
-  },
-  {
-    id: '#PAY-003',
-    customer: 'Aisha Kamau',
-    service: 'Cultural City Walk',
-    date: 'Feb 26, 2026',
-    amount: '$80',
-    status: 'completed',
-    method: 'Mobile Money',
-    transactionId: 'TXN-123458',
-  },
-  {
-    id: '#PAY-004',
-    customer: 'Tom Weber',
-    service: 'Sunset Cruise',
-    date: 'Feb 27, 2026',
-    amount: '$200',
-    status: 'refunded',
-    method: 'Credit Card',
-    transactionId: 'TXN-123459',
-  },
-  {
-    id: '#PAY-005',
-    customer: 'Priya Nair',
-    service: 'Mountain Hiking Trip',
-    date: 'Mar 1, 2026',
-    amount: '$430',
-    status: 'completed',
-    method: 'Credit Card',
-    transactionId: 'TXN-123460',
-  },
-  {
-    id: '#PAY-006',
-    customer: 'Michael Ochieng',
-    service: 'Hot Air Balloon Ride',
-    date: 'Mar 2, 2026',
-    amount: '$450',
-    status: 'pending',
-    method: 'Mobile Money',
-    transactionId: 'TXN-123461',
-  },
-];
+import { 
+  fetchPayments, 
+  createPayment, 
+  updatePayment, 
+  refundPayment,
+  deletePayment 
+} from '../services/api';
 
 const paymentStatusColors = {
   completed: 'bg-emerald-100 text-emerald-700',
@@ -75,7 +19,9 @@ const paymentStatusColors = {
 
 export default function Payments() {
   // State for payments data
-  const [payments, setPayments] = useState(initialPayments);
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -93,34 +39,106 @@ export default function Payments() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
+  // Fetch payments from backend
+  useEffect(() => {
+    loadPayments();
+  }, []);
+
+  const loadPayments = async () => {
+    try {
+      setLoading(true);
+      const response = await fetchPayments();
+      console.log('Payments loaded:', response.data);
+      setPayments(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to load payments:', err);
+      setError('Could not load payments. Is the backend running?');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper functions to extract data safely
+  const getPaymentId = (payment) => {
+    return payment.payment_id || payment.id || '#Unknown';
+  };
+
+  const getCustomerName = (payment) => {
+    return payment.booking?.customer || payment.customer || 'Unknown';
+  };
+
+  const getServiceName = (payment) => {
+    return payment.booking?.service?.name || payment.service || 'Unknown';
+  };
+
+  const getPaymentDate = (payment) => {
+    const dateStr = payment.created_at || payment.date;
+    if (!dateStr) return 'Unknown';
+    const options = { month: 'short', day: 'numeric', year: 'numeric' };
+    return new Date(dateStr).toLocaleDateString('en-US', options);
+  };
+
+  const getPaymentAmount = (payment) => {
+    const amount = parseFloat(payment.amount) || 0;
+    return `$${amount.toFixed(2)}`;
+  };
+
+  const getPaymentMethod = (payment) => {
+    return payment.method || 'Unknown';
+  };
+
+  const getPaymentStatus = (payment) => {
+    return payment.status || 'pending';
+  };
+
+  const getTransactionId = (payment) => {
+    return payment.transaction_id || payment.transactionId || 'N/A';
+  };
+
+  const getAvatarInitials = (customerName) => {
+    return customerName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  };
+
   // Get unique payment methods for filter
-  const paymentMethods = ['All', ...new Set(payments.map(p => p.method))];
+  const paymentMethods = ['All', ...new Set(payments.map(p => p.method).filter(Boolean))];
 
   // Filter payments
   const filteredPayments = payments.filter(payment => {
-    const matchesSearch = payment.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         payment.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         payment.transactionId.toLowerCase().includes(searchQuery.toLowerCase());
+    const customerName = getCustomerName(payment).toLowerCase();
+    const paymentId = getPaymentId(payment).toLowerCase();
+    const transactionId = getTransactionId(payment).toLowerCase();
+    const searchLower = searchQuery.toLowerCase();
+    
+    const matchesSearch = 
+      customerName.includes(searchLower) ||
+      paymentId.includes(searchLower) ||
+      transactionId.includes(searchLower);
+    
     const matchesMethod = methodFilter === 'All' || payment.method === methodFilter;
     const matchesStatus = statusFilter === 'All' || payment.status === statusFilter;
     
-    // Date range filtering (simplified for demo)
+    // Date range filtering
     let matchesDate = true;
-    if (timeframe === 'month') {
-      matchesDate = payment.date.includes('Feb') || payment.date.includes('Mar');
+    if (timeframe === 'month' && payment.created_at) {
+      const paymentDate = new Date(payment.created_at);
+      const now = new Date();
+      matchesDate = paymentDate.getMonth() === now.getMonth() &&
+                    paymentDate.getFullYear() === now.getFullYear();
     }
+    // Add more date range logic as needed
     
     return matchesSearch && matchesMethod && matchesStatus && matchesDate;
   });
 
-  // Calculate totals
+  // Calculate totals from real data
   const totalRevenue = payments
     .filter(p => p.status === 'completed')
-    .reduce((sum, p) => sum + parseInt(p.amount.slice(1)), 0);
-  
+    .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+
   const pendingAmount = payments
     .filter(p => p.status === 'pending')
-    .reduce((sum, p) => sum + parseInt(p.amount.slice(1)), 0);
+    .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
 
   const completedCount = payments.filter(p => p.status === 'completed').length;
 
@@ -149,6 +167,7 @@ export default function Payments() {
 
   const handleStatCardClick = (status) => {
     setStatusFilter(status);
+    setCurrentPage(1);
   };
 
   return (
@@ -189,7 +208,7 @@ export default function Payments() {
           onClick={() => handleStatCardClick('All')}
         >
           <p className="text-xs text-gray-400 mb-2">Total Revenue</p>
-          <p className="text-3xl font-bold text-[#003D5B]">${totalRevenue}</p>
+          <p className="text-3xl font-bold text-[#003D5B]">${totalRevenue.toFixed(2)}</p>
           <p className="text-xs text-emerald-500 mt-2">↑ 8% from last {timeframe}</p>
         </div>
         <div 
@@ -197,7 +216,7 @@ export default function Payments() {
           onClick={() => handleStatCardClick('pending')}
         >
           <p className="text-xs text-gray-400 mb-2">Pending Payments</p>
-          <p className="text-3xl font-bold text-[#EDAE49]">${pendingAmount}</p>
+          <p className="text-3xl font-bold text-[#EDAE49]">${pendingAmount.toFixed(2)}</p>
           <p className="text-xs text-gray-400 mt-2">{payments.filter(p => p.status === 'pending').length} transactions</p>
         </div>
         <div 
@@ -210,160 +229,173 @@ export default function Payments() {
         </div>
       </div>
 
-      {/* Filters and Timeframe */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
-        <div className="flex flex-wrap gap-4">
-          <div className="flex-1 min-w-[200px]">
-            <input
-              type="text"
-              placeholder="Search payments by customer, ID, or transaction..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#EDAE49]/20"
-            />
-          </div>
-          <select 
-            value={methodFilter}
-            onChange={(e) => setMethodFilter(e.target.value)}
-            className="px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#EDAE49]/20"
-          >
-            {paymentMethods.map(method => (
-              <option key={method} value={method}>
-                {method === 'All' ? 'All Payment Methods' : method}
-              </option>
-            ))}
-          </select>
-          <select 
-            value={timeframe}
-            onChange={(e) => setTimeframe(e.target.value)}
-            className="px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#EDAE49]/20"
-          >
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-            <option value="quarter">This Quarter</option>
-            <option value="year">This Year</option>
-          </select>
+      {/* Loading and Error States */}
+      {loading ? (
+        <div className="text-center py-12">
+          <p className="text-gray-400">Loading payments...</p>
         </div>
-
-        {/* Status filter chips */}
-        <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
-          {['All', 'completed', 'pending', 'refunded'].map((status) => (
-            <button
-              key={status}
-              onClick={() => setStatusFilter(status)}
-              className={`px-4 py-1.5 rounded-full text-xs font-medium capitalize transition-all ${
-                statusFilter === status
-                  ? status === 'All' 
-                    ? 'bg-[#003D5B] text-white'
-                    : paymentStatusColors[status]
-                  : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
-              }`}
-            >
-              {status}
-            </button>
-          ))}
+      ) : error ? (
+        <div className="text-center py-12">
+          <p className="text-red-500">{error}</p>
         </div>
-      </div>
-
-      {/* Payments Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment ID</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Service</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Method</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Transaction ID</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {paginatedPayments.length > 0 ? (
-                paginatedPayments.map((payment) => (
-                  <tr 
-                    key={payment.id} 
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => handleViewDetails(payment)}
-                  >
-                    <td className="px-6 py-4 font-medium text-[#003D5B]">{payment.id}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-[#003D5B]/10 flex items-center justify-center text-[#003D5B] font-bold text-xs">
-                          {payment.customer.split(' ').map(n => n[0]).join('')}
-                        </div>
-                        <span className="font-medium">{payment.customer}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm">{payment.service}</td>
-                    <td className="px-6 py-4 text-sm">{payment.date}</td>
-                    <td className="px-6 py-4 font-bold text-[#EDAE49]">{payment.amount}</td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm">{payment.method}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${paymentStatusColors[payment.status]}`}>
-                        {payment.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-xs text-gray-400 font-mono">{payment.transactionId}</span>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center text-gray-400">
-                    No payments found matching your filters
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        
-        {/* Pagination */}
-        {filteredPayments.length > 0 && (
-          <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-            <p className="text-sm text-gray-400">
-              Showing {((currentPage - 1) * itemsPerPage) + 1}-
-              {Math.min(currentPage * itemsPerPage, filteredPayments.length)} of {filteredPayments.length} payments
-            </p>
-            <div className="flex gap-2">
-              <button 
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-1 rounded-lg border border-gray-200 text-gray-400 hover:border-[#EDAE49] hover:text-[#EDAE49] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      ) : (
+        <>
+          {/* Filters and Timeframe */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
+            <div className="flex flex-wrap gap-4">
+              <div className="flex-1 min-w-[200px]">
+                <input
+                  type="text"
+                  placeholder="Search payments by customer, ID, or transaction..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#EDAE49]/20"
+                />
+              </div>
+              <select 
+                value={methodFilter}
+                onChange={(e) => setMethodFilter(e.target.value)}
+                className="px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#EDAE49]/20"
               >
-                ←
-              </button>
-              {[...Array(totalPages)].map((_, i) => (
+                {paymentMethods.map(method => (
+                  <option key={method} value={method}>
+                    {method === 'All' ? 'All Payment Methods' : method}
+                  </option>
+                ))}
+              </select>
+              <select 
+                value={timeframe}
+                onChange={(e) => setTimeframe(e.target.value)}
+                className="px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#EDAE49]/20"
+              >
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="quarter">This Quarter</option>
+                <option value="year">This Year</option>
+              </select>
+            </div>
+
+            {/* Status filter chips */}
+            <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
+              {['All', 'completed', 'pending', 'refunded'].map((status) => (
                 <button
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`px-3 py-1 rounded-lg transition-colors ${
-                    currentPage === i + 1 
-                      ? 'bg-[#003D5B] text-white' 
-                      : 'border border-gray-200 text-gray-400 hover:border-[#EDAE49] hover:text-[#EDAE49]'
+                  key={status}
+                  onClick={() => setStatusFilter(status)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-medium capitalize transition-all ${
+                    statusFilter === status
+                      ? status === 'All' 
+                        ? 'bg-[#003D5B] text-white'
+                        : paymentStatusColors[status]
+                      : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
                   }`}
                 >
-                  {i + 1}
+                  {status}
                 </button>
               ))}
-              <button 
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="px-3 py-1 rounded-lg border border-gray-200 text-gray-400 hover:border-[#EDAE49] hover:text-[#EDAE49] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                →
-              </button>
             </div>
           </div>
-        )}
-      </div>
+
+          {/* Payments Table */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment ID</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Service</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Method</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Transaction ID</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {paginatedPayments.length > 0 ? (
+                    paginatedPayments.map((payment) => (
+                      <tr 
+                        key={payment.id} 
+                        className="hover:bg-gray-50 transition-colors cursor-pointer"
+                        onClick={() => handleViewDetails(payment)}
+                      >
+                        <td className="px-6 py-4 font-medium text-[#003D5B]">{getPaymentId(payment)}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-[#003D5B]/10 flex items-center justify-center text-[#003D5B] font-bold text-xs">
+                              {getAvatarInitials(getCustomerName(payment))}
+                            </div>
+                            <span className="font-medium">{getCustomerName(payment)}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm">{getServiceName(payment)}</td>
+                        <td className="px-6 py-4 text-sm">{getPaymentDate(payment)}</td>
+                        <td className="px-6 py-4 font-bold text-[#EDAE49]">{getPaymentAmount(payment)}</td>
+                        <td className="px-6 py-4">
+                          <span className="text-sm">{getPaymentMethod(payment)}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${paymentStatusColors[getPaymentStatus(payment)]}`}>
+                            {getPaymentStatus(payment)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-xs text-gray-400 font-mono">{getTransactionId(payment)}</span>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="8" className="px-6 py-12 text-center text-gray-400">
+                        No payments found matching your filters
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Pagination */}
+            {filteredPayments.length > 0 && (
+              <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+                <p className="text-sm text-gray-400">
+                  Showing {((currentPage - 1) * itemsPerPage) + 1}-
+                  {Math.min(currentPage * itemsPerPage, filteredPayments.length)} of {filteredPayments.length} payments
+                </p>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 rounded-lg border border-gray-200 text-gray-400 hover:border-[#EDAE49] hover:text-[#EDAE49] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    ←
+                  </button>
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPage(i + 1)}
+                      className={`px-3 py-1 rounded-lg transition-colors ${
+                        currentPage === i + 1 
+                          ? 'bg-[#003D5B] text-white' 
+                          : 'border border-gray-200 text-gray-400 hover:border-[#EDAE49] hover:text-[#EDAE49]'
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 rounded-lg border border-gray-200 text-gray-400 hover:border-[#EDAE49] hover:text-[#EDAE49] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    →
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Modals */}
       <PayoutModal 

@@ -1,29 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Button from '../common/Button';
-
-// This would normally come from your services data
-const availableServices = [
-  'Safari Day Tour',
-  'Beach Getaway Package',
-  'Cultural City Walk',
-  'Sunset Cruise',
-  'Mountain Hiking Trip',
-  'Hot Air Balloon Ride',
-  'Cultural Visit'
-];
+import { fetchServices } from '../../services/api';
 
 export default function PackageForm({ initialData = {}, onSubmit, onCancel, isEdit = false }) {
   const [formData, setFormData] = useState({
     name: initialData.name || '',
-    services: initialData.services || [],
     price: initialData.price || '',
     duration: initialData.duration || '',
     discount: initialData.discount || '',
     status: initialData.status || 'active',
-    ...initialData
   });
 
-  const [selectedServices, setSelectedServices] = useState(formData.services);
+  const [availableServices, setAvailableServices] = useState([]);
+  const [selectedServiceIds, setSelectedServiceIds] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load available services from backend
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const response = await fetchServices();
+        console.log('Loaded services for package form:', response.data);
+        setAvailableServices(response.data);
+        
+        // If editing, pre-select the services that are already in the package
+        if (isEdit && initialData.services) {
+          // Extract IDs from the service objects
+          const serviceIds = initialData.services.map(s => s.id);
+          setSelectedServiceIds(serviceIds);
+        }
+      } catch (error) {
+        console.error('Failed to load services:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadServices();
+  }, [isEdit, initialData]);
 
   const statuses = ['active', 'pending', 'inactive'];
 
@@ -32,23 +45,27 @@ export default function PackageForm({ initialData = {}, onSubmit, onCancel, isEd
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleServiceToggle = (service) => {
-    setSelectedServices(prev => {
-      if (prev.includes(service)) {
-        return prev.filter(s => s !== service);
+  const handleServiceToggle = (serviceId) => {
+    setSelectedServiceIds(prev => {
+      if (prev.includes(serviceId)) {
+        return prev.filter(id => id !== serviceId);
       } else {
-        return [...prev, service];
+        return [...prev, serviceId];
       }
     });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({
+    
+    // Prepare data for backend - send service IDs, not names!
+    const packageData = {
       ...formData,
-      services: selectedServices,
-      id: isEdit ? formData.id : Date.now() // temporary ID generation
-    });
+      service_ids: selectedServiceIds,  // This is what the backend expects
+    };
+    
+    console.log('Submitting package data:', packageData);
+    onSubmit(packageData);
   };
 
   return (
@@ -96,6 +113,7 @@ export default function PackageForm({ initialData = {}, onSubmit, onCancel, isEd
             onChange={handleChange}
             required
             min="0"
+            step="0.01"
             className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#EDAE49]/20"
             placeholder="899"
           />
@@ -117,25 +135,37 @@ export default function PackageForm({ initialData = {}, onSubmit, onCancel, isEd
         />
       </div>
 
-      {/* Services Selection */}
+      {/* Services Selection - NOW WITH REAL DATA FROM BACKEND */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Included Services
         </label>
-        <div className="border border-gray-200 rounded-xl p-3 max-h-48 overflow-y-auto">
-          {availableServices.map(service => (
-            <label key={service} className="flex items-center gap-2 py-1.5 hover:bg-gray-50 px-2 rounded-lg cursor-pointer">
-              <input
-                type="checkbox"
-                checked={selectedServices.includes(service)}
-                onChange={() => handleServiceToggle(service)}
-                className="rounded border-gray-300 text-[#EDAE49] focus:ring-[#EDAE49]"
-              />
-              <span className="text-sm text-gray-700">{service}</span>
-            </label>
-          ))}
-        </div>
-        {selectedServices.length === 0 && (
+        {loading ? (
+          <div className="border border-gray-200 rounded-xl p-6 text-center">
+            <p className="text-gray-400">Loading services...</p>
+          </div>
+        ) : (
+          <div className="border border-gray-200 rounded-xl p-3 max-h-48 overflow-y-auto">
+            {availableServices.length === 0 ? (
+              <p className="text-gray-400 text-center py-2">No services available. Create some services first.</p>
+            ) : (
+              availableServices.map(service => (
+                <label key={service.id} className="flex items-center gap-2 py-1.5 hover:bg-gray-50 px-2 rounded-lg cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedServiceIds.includes(service.id)}
+                    onChange={() => handleServiceToggle(service.id)}
+                    className="rounded border-gray-300 text-[#EDAE49] focus:ring-[#EDAE49]"
+                  />
+                  <span className="text-sm text-gray-700">
+                    {service.name} <span className="text-gray-400">(${service.price})</span>
+                  </span>
+                </label>
+              ))
+            )}
+          </div>
+        )}
+        {!loading && selectedServiceIds.length === 0 && (
           <p className="text-xs text-[#D1495B] mt-1">Select at least one service</p>
         )}
       </div>
@@ -167,7 +197,7 @@ export default function PackageForm({ initialData = {}, onSubmit, onCancel, isEd
         <Button 
           type="submit" 
           variant="primary"
-          disabled={selectedServices.length === 0}
+          disabled={selectedServiceIds.length === 0 || loading}
         >
           {isEdit ? 'Update Package' : 'Create Package'}
         </Button>
