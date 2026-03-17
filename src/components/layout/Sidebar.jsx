@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext'; // ADD THIS
 
 const navItems = [
   { label: 'Dashboard', path: '/dashboard', icon: '⊞' },
@@ -11,21 +12,28 @@ const navItems = [
   { label: 'Payments', path: '/payments', icon: '💳' },
 ];
 
-
 export default function Sidebar() {
-// Add this at the top of your Sidebar component
-// useEffect(() => {
-//     console.log('Sidebar mounted');
-    
-//     // This will show you what's causing the renders
-//     console.trace('Sidebar render trace');
-    
-//     return () => console.log('Sidebar unmounted');
-//   }, []);
-
-  const instanceId = Math.random().toString(36).slice(2, 8); // random short ID
-  console.log(`Sidebar rendered — instance: ${instanceId} — time: ${new Date().toLocaleTimeString()}`);
+  const { user, logout } = useAuth(); // ADD THIS
   const [collapsed, setCollapsed] = useState(false);
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (!user) return '?';
+    if (user.username) {
+      return user.username.substring(0, 2).toUpperCase();
+    }
+    return 'JD';
+  };
+
+  // Get display name
+  const getDisplayName = () => {
+    if (!user) return 'Guest';
+    return user.username || 'Business Owner';
+  };
+
+  const handleLogout = async () => { // ADD THIS
+    await logout();
+  };
 
   return (
     <aside
@@ -101,18 +109,41 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* User profile at bottom */}
+      {/* User profile at bottom - UPDATED */}
       <div className={`px-4 py-5 border-t border-white/10 flex items-center gap-3 ${collapsed ? 'justify-center' : ''}`}>
         <div className="w-9 h-9 rounded-xl bg-[#30638E] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-          JD
+          {getUserInitials()}
         </div>
         {!collapsed && (
-          <div className="overflow-hidden">
-            <p className="text-white text-sm font-semibold truncate">Jane Doe</p>
+          <div className="overflow-hidden flex-1">
+            <p className="text-white text-sm font-semibold truncate">{getDisplayName()}</p>
             <p className="text-white/40 text-xs truncate">Business Owner</p>
           </div>
         )}
+        {/* Logout button - only show when expanded */}
+        {!collapsed && (
+          <button
+            onClick={handleLogout}
+            className="text-white/40 hover:text-white transition-colors p-1"
+            title="Logout"
+          >
+            🚪
+          </button>
+        )}
       </div>
+
+      {/* Logout button when collapsed - appears as icon */}
+      {collapsed && (
+        <div className="px-4 py-3 border-t border-white/10 flex justify-center">
+          <button
+            onClick={handleLogout}
+            className="text-white/40 hover:text-white transition-colors p-2"
+            title="Logout"
+          >
+            🚪
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

@@ -6,6 +6,59 @@ const API = axios.create({
   timeout: 5000,  // Wait 5 seconds max
 });
 
+
+// =============== ADD THESE INTERCEPTORS ===============
+
+// Request interceptor - adds token to every request
+API.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor - handles token expiration
+API.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // If error is 401 and we haven't tried to refresh yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      try {
+        const refreshToken = localStorage.getItem('refresh_token');
+        const response = await axios.post('http://127.0.0.1:8000/api/login/refresh/', {
+          refresh: refreshToken
+        });
+        
+        const { access } = response.data;
+        localStorage.setItem('token', access);
+        
+        // Update the failed request with new token and retry
+        originalRequest.headers.Authorization = `Bearer ${access}`;
+        return API(originalRequest);
+        
+      } catch (refreshError) {
+        // Refresh failed - redirect to login
+        localStorage.clear();
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
+
 // =============== Service API calls ================
 export const fetchServices = () => API.get('services/');
 export const fetchService = (id) => API.get(`services/${id}/`);
