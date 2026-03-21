@@ -7,38 +7,38 @@ import ApplyForOpportunityModal from '../components/modals/ApplyForOpportunityMo
 import { fetchCollaborators } from '../services/api';
 
 // Move data into state inside component
-const initialCollaborators = [
-  {
-    id: 1,
-    name: 'Savannah Guides Ltd',
-    type: 'Tour Guide',
-    location: 'Nairobi',
-    rating: 4.8,
-    collaborations: 12,
-    status: 'active',
-    lastActive: '2 days ago',
-  },
-  {
-    id: 2,
-    name: 'Beach Paradise Hotels',
-    type: 'Accommodation',
-    location: 'Mombasa',
-    rating: 4.5,
-    collaborations: 8,
-    status: 'pending',
-    lastActive: '1 week ago',
-  },
-  {
-    id: 3,
-    name: 'Cultural Heritage Tours',
-    type: 'Cultural Expert',
-    location: 'Lamu',
-    rating: 4.9,
-    collaborations: 5,
-    status: 'active',
-    lastActive: 'Yesterday',
-  },
-];
+// const initialCollaborators = [
+//   {
+//     id: 1,
+//     name: 'Savannah Guides Ltd',
+//     type: 'Tour Guide',
+//     location: 'Nairobi',
+//     rating: 4.8,
+//     collaborations: 12,
+//     status: 'active',
+//     lastActive: '2 days ago',
+//   },
+//   {
+//     id: 2,
+//     name: 'Beach Paradise Hotels',
+//     type: 'Accommodation',
+//     location: 'Mombasa',
+//     rating: 4.5,
+//     collaborations: 8,
+//     status: 'pending',
+//     lastActive: '1 week ago',
+//   },
+//   {
+//     id: 3,
+//     name: 'Cultural Heritage Tours',
+//     type: 'Cultural Expert',
+//     location: 'Lamu',
+//     rating: 4.9,
+//     collaborations: 5,
+//     status: 'active',
+//     lastActive: 'Yesterday',
+//   },
+// ];
 
 const initialOpportunities = [
   {
