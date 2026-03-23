@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import ServiceCard from '../../components/common/ServiceCard';
+import TouristServiceCard from '../../components/tourist/TouristServiceCard';
+import ServiceDetailModal from '../../components/tourist/modals/ServiceDetailModal';
 import Button from '../../components/common/Button';
 
 // All services from all businesses
@@ -14,7 +15,8 @@ const allServices = [
     business: 'Safari Kenya',
     rating: 4.9,
     duration: 'Full day',
-    location: 'Masai Mara'
+    location: 'Masai Mara',
+    description: 'Full-day safari in Masai Mara with experienced guides. Includes lunch, park fees, and transport from Nairobi.'
   },
   {
     id: 2,
@@ -26,7 +28,8 @@ const allServices = [
     business: 'Beach Paradise',
     rating: 4.8,
     duration: '3 days',
-    location: 'Diani Beach'
+    location: 'Diani Beach',
+    description: '3-day beach retreat including luxury accommodation, snorkeling, and sunset dhow cruise.'
   },
   {
     id: 3,
@@ -38,7 +41,8 @@ const allServices = [
     business: 'Safari Kenya',
     rating: 4.9,
     duration: '3 hours',
-    location: 'Masai Mara'
+    location: 'Masai Mara',
+    description: 'Sunrise balloon ride over the Masai Mara with champagne breakfast.'
   },
   {
     id: 4,
@@ -50,7 +54,8 @@ const allServices = [
     business: 'Cultural Tours',
     rating: 4.8,
     duration: 'Half day',
-    location: 'Lamu Island'
+    location: 'Lamu Island',
+    description: 'Guided tour through historic Lamu Town, a UNESCO World Heritage site.'
   },
   {
     id: 5,
@@ -62,7 +67,8 @@ const allServices = [
     business: 'Beach Paradise',
     rating: 4.7,
     duration: 'Full day',
-    location: 'Diani Beach'
+    location: 'Diani Beach',
+    description: 'Jet skiing, parasailing, and banana boat rides. All equipment included.'
   },
   {
     id: 6,
@@ -74,7 +80,8 @@ const allServices = [
     business: 'Cultural Tours',
     rating: 4.9,
     duration: '3 hours',
-    location: 'Mombasa'
+    location: 'Mombasa',
+    description: 'Learn to cook traditional Swahili dishes with local chefs. Includes market visit and lunch.'
   }
 ];
 
@@ -101,7 +108,10 @@ export default function Services() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('featured');
   const [searchQuery, setSearchQuery] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
+  
+  // Modal state
+  const [selectedService, setSelectedService] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Filter services
   let filteredServices = allServices.filter(service => {
@@ -128,9 +138,9 @@ export default function Services() {
     }
   });
 
-  const handleViewService = (serviceId) => {
-    console.log('View service:', serviceId);
-    // Will navigate to service details later
+  const handleViewService = (service) => {
+    setSelectedService(service);
+    setIsModalOpen(true);
   };
 
   return (
@@ -197,12 +207,11 @@ export default function Services() {
       {filteredServices.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredServices.map(service => (
-            <div key={service.id} className="cursor-pointer" onClick={() => handleViewService(service.id)}>
-              <ServiceCard 
-                {...service} 
-                onManage={() => handleViewService(service.id)}
-              />
-            </div>
+            <TouristServiceCard 
+              key={service.id} 
+              {...service} 
+              onViewDetails={() => handleViewService(service)}
+            />
           ))}
         </div>
       ) : (
@@ -221,6 +230,16 @@ export default function Services() {
           </button>
         </div>
       )}
+
+      {/* Service Detail Modal */}
+      <ServiceDetailModal 
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedService(null);
+        }}
+        service={selectedService}
+      />
     </div>
   );
 }

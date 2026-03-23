@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import TouristPackageCard from '../../components/tourist/TouristPackageCard';
+import PackageDetailModal from '../../components/tourist/modals/PackageDetailModal';
 import Button from '../../components/common/Button';
 
 // All packages from all businesses
@@ -94,6 +96,10 @@ export default function Packages() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('featured');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Modal state
+  const [selectedPackage, setSelectedPackage] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Filter packages
   let filteredPackages = allPackages.filter(pkg => {
@@ -122,9 +128,9 @@ export default function Packages() {
     }
   });
 
-  const handleViewPackage = (packageId) => {
-    console.log('View package:', packageId);
-    // Will navigate to package details later
+  const handleViewPackage = (pkg) => {
+    setSelectedPackage(pkg);
+    setIsModalOpen(true);
   };
 
   return (
@@ -191,54 +197,11 @@ export default function Packages() {
       {filteredPackages.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPackages.map(pkg => (
-            <div 
+            <TouristPackageCard 
               key={pkg.id} 
-              className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer"
-              onClick={() => handleViewPackage(pkg.id)}
-            >
-              {/* Image area */}
-              <div className="relative h-40 bg-gradient-to-br from-[#003D5B] to-[#30638E] overflow-hidden">
-                <div className="w-full h-full flex items-center justify-center text-5xl opacity-30">📦</div>
-                {pkg.discount && (
-                  <div className="absolute top-3 left-3">
-                    <span className="text-xs font-bold bg-[#EDAE49] text-[#003D5B] px-2 py-1 rounded-full">
-                      Save {pkg.discount}
-                    </span>
-                  </div>
-                )}
-                <div className="absolute top-3 right-3">
-                  <div className="flex items-center gap-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
-                    <span className="text-yellow-500 text-xs">★</span>
-                    <span className="text-xs font-semibold text-[#003D5B]">{pkg.rating}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs text-[#00798C] font-semibold uppercase tracking-wider">{pkg.duration}</p>
-                  <p className="text-xs text-gray-400">{pkg.services} {pkg.services === 1 ? 'service' : 'services'}</p>
-                </div>
-                <h3 className="font-bold text-[#003D5B] text-lg mb-1 leading-tight">{pkg.name}</h3>
-                <p className="text-xs text-gray-400 mb-3">by {pkg.business}</p>
-                <p className="text-sm text-gray-500 mb-3 line-clamp-2">{pkg.description}</p>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xl font-bold text-[#EDAE49]">${pkg.price}</p>
-                      {pkg.originalPrice && (
-                        <p className="text-sm text-gray-400 line-through">${pkg.originalPrice}</p>
-                      )}
-                    </div>
-                  </div>
-                  <Button variant="primary" size="sm" className="px-4">
-                    View Deal
-                  </Button>
-                </div>
-              </div>
-            </div>
+              {...pkg} 
+              onViewDetails={() => handleViewPackage(pkg)}
+            />
           ))}
         </div>
       ) : (
@@ -257,6 +220,16 @@ export default function Packages() {
           </button>
         </div>
       )}
+
+      {/* Package Detail Modal */}
+      <PackageDetailModal 
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedPackage(null);
+        }}
+        pkg={selectedPackage}
+      />
     </div>
   );
 }

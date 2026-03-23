@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Button from '../../components/common/Button';
+import CollaborationDetailModal from '../../components/tourist/modals/CollaborationDetailModal';
 
 // Sample collaborations data
 const collaborations = [
@@ -110,6 +111,10 @@ export default function Collaborations() {
   const [sortBy, setSortBy] = useState('featured');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedId, setExpandedId] = useState(null);
+  
+  // ADDED: Modal state
+  const [selectedCollaboration, setSelectedCollaboration] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Filter collaborations
   let filteredCollaborations = collaborations.filter(collab => {
@@ -137,9 +142,10 @@ export default function Collaborations() {
     }
   });
 
-  const handleViewDeal = (collabId) => {
-    console.log('View collaboration:', collabId);
-    // Will navigate to checkout or details later
+  // CHANGED: Now accepts the full collab object
+  const handleViewDeal = (collab) => {
+    setSelectedCollaboration(collab);
+    setIsModalOpen(true);
   };
 
   const toggleExpand = (id) => {
@@ -301,7 +307,7 @@ export default function Collaborations() {
                     <Button 
                       variant="primary" 
                       size="sm"
-                      onClick={() => handleViewDeal(collab.id)}
+                      onClick={() => handleViewDeal(collab)}  // CHANGED: pass the full collab object
                     >
                       Book This Deal
                     </Button>
@@ -327,6 +333,16 @@ export default function Collaborations() {
           </button>
         </div>
       )}
+
+      {/* ADDED: Modal component */}
+      <CollaborationDetailModal 
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedCollaboration(null);
+        }}
+        collaboration={selectedCollaboration}
+      />
     </div>
   );
 }

@@ -54,7 +54,7 @@ export default function HeroSection() {
               <select
                 value={searchCategory}
                 onChange={(e) => setSearchCategory(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#EDAE49]/50 appearance-none bg-white"
+                className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#EDAE49]/50 appearance-none bg-gray"
               >
                 {categories.map(cat => (
                   <option key={cat.value} value={cat.value}>{cat.label}</option>

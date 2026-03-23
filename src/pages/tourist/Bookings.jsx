@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import Button from '../../components/common/Button';
+import BookingDetailModal from '../../components/tourist/modals/BookingDetailModal';
+import CancelBookingModal from '../../components/tourist/modals/CancelBookingModal';
 
 // Sample booking data for a tourist
 const myBookings = [
@@ -8,7 +10,7 @@ const myBookings = [
     type: 'service',
     name: 'Masai Mara Safari Adventure',
     business: 'Safari Kenya',
-    date: '2026-03-15',
+    date: '2026-03-25',
     guests: 2,
     amount: '700',
     status: 'confirmed',
@@ -50,6 +52,18 @@ const myBookings = [
     status: 'cancelled',
     image: null,
     bookingDate: '2026-01-25'
+  },
+  {
+    id: 'BK-005',
+    type: 'service',
+    name: 'Hot Air Balloon Safari',
+    business: 'Safari Kenya',
+    date: '2026-04-10',
+    guests: 2,
+    amount: '900',
+    status: 'confirmed',
+    image: null,
+    bookingDate: '2026-03-01'
   }
 ];
 
@@ -85,34 +99,41 @@ const typeIcon = {
 export default function Bookings() {
   const [activeTab, setActiveTab] = useState('upcoming');
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
-  const today = new Date();
-  
-  const upcomingBookings = myBookings.filter(b => 
-    new Date(b.date) >= today && b.status !== 'cancelled'
+  // Filter based on status only
+  const upcomingBookings = myBookings.filter(booking => 
+    booking.status === 'confirmed' || booking.status === 'pending'
   );
-  
-  const pastBookings = myBookings.filter(b => 
-    new Date(b.date) < today || b.status === 'completed'
+
+  const pastBookings = myBookings.filter(booking => 
+    booking.status === 'completed' || booking.status === 'cancelled'
   );
 
   const bookingsToShow = activeTab === 'upcoming' ? upcomingBookings : pastBookings;
 
-  const handleCancelBooking = (bookingId) => {
-    console.log('Cancel booking:', bookingId);
-    // Will implement cancellation later
-    alert('Cancellation request submitted. Please confirm within 24 hours.');
-  };
-
   const handleViewDetails = (booking) => {
     setSelectedBooking(booking);
-    console.log('View booking details:', booking.id);
-    // Will open modal later
+    setIsDetailModalOpen(true);
   };
 
-  const handleLeaveReview = (bookingId) => {
-    console.log('Leave review for booking:', bookingId);
-    // Will open review modal later
+  const handleCancelBooking = (booking) => {
+    setSelectedBooking(booking);
+    setIsCancelModalOpen(true);
+  };
+
+  const handleConfirmCancel = (bookingId, reason) => {
+    alert(`Cancellation request submitted for booking ${bookingId}`);
+    setIsCancelModalOpen(false);
+  };
+
+  const handleLeaveReview = (booking) => {
+    alert(`Leave a review for ${booking.name}`);
+  };
+
+  const handleContactBusiness = (booking) => {
+    alert(`Contact ${booking.business}`);
   };
 
   const formatDate = (dateString) => {
@@ -131,7 +152,10 @@ export default function Bookings() {
       {/* Tabs */}
       <div className="flex gap-4 mb-6 border-b border-gray-200">
         <button
-          onClick={() => setActiveTab('upcoming')}
+          onClick={() => {
+            console.log('Switching to Upcoming tab');
+            setActiveTab('upcoming');
+          }}
           className={`px-4 py-2 text-sm font-medium transition-all relative ${
             activeTab === 'upcoming'
               ? 'text-[#EDAE49]'
@@ -139,7 +163,7 @@ export default function Bookings() {
           }`}
         >
           Upcoming
-          {upcomingBookings.length > 0 && activeTab !== 'upcoming' && (
+          {upcomingBookings.length > 0 && (
             <span className="ml-1 text-xs bg-[#EDAE49] text-white px-1.5 py-0.5 rounded-full">
               {upcomingBookings.length}
             </span>
@@ -149,7 +173,10 @@ export default function Bookings() {
           )}
         </button>
         <button
-          onClick={() => setActiveTab('past')}
+          onClick={() => {
+            console.log('Switching to Past Trips tab');
+            setActiveTab('past');
+          }}
           className={`px-4 py-2 text-sm font-medium transition-all relative ${
             activeTab === 'past'
               ? 'text-[#EDAE49]'
@@ -157,10 +184,20 @@ export default function Bookings() {
           }`}
         >
           Past Trips
+          {pastBookings.length > 0 && (
+            <span className="ml-1 text-xs bg-gray-400 text-white px-1.5 py-0.5 rounded-full">
+              {pastBookings.length}
+            </span>
+          )}
           {activeTab === 'past' && (
             <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#EDAE49]" />
           )}
         </button>
+      </div>
+
+      {/* Debug: Show which tab is active */}
+      <div className="text-xs text-gray-400 mb-2">
+        Active tab: {activeTab} | Showing: {bookingsToShow.length} bookings
       </div>
 
       {/* Bookings List */}
@@ -172,6 +209,7 @@ export default function Bookings() {
               className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all"
             >
               <div className="p-5">
+                {/* Header Row */}
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-[#003D5B]/10 flex items-center justify-center text-xl">
@@ -188,6 +226,7 @@ export default function Bookings() {
                   </span>
                 </div>
 
+                {/* Details Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                   <div>
                     <p className="text-xs text-gray-400">Travel Date</p>
@@ -207,6 +246,7 @@ export default function Bookings() {
                   </div>
                 </div>
 
+                {/* Action Buttons */}
                 <div className="flex flex-wrap gap-3 pt-3 border-t border-gray-100">
                   <Button 
                     variant="outline" 
@@ -216,42 +256,34 @@ export default function Bookings() {
                     View Details
                   </Button>
                   
-                  {booking.status === 'pending' && (
+                  {/* Cancel button - only for confirmed/pending */}
+                  {(booking.status === 'confirmed' || booking.status === 'pending') && (
                     <Button 
                       variant="outline" 
                       size="sm"
                       className="border-[#D1495B] text-[#D1495B] hover:bg-[#D1495B]/5"
-                      onClick={() => handleCancelBooking(booking.id)}
-                    >
-                      Cancel Request
-                    </Button>
-                  )}
-                  
-                  {booking.status === 'confirmed' && new Date(booking.date) > today && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="border-[#D1495B] text-[#D1495B] hover:bg-[#D1495B]/5"
-                      onClick={() => handleCancelBooking(booking.id)}
+                      onClick={() => handleCancelBooking(booking)}
                     >
                       Cancel Booking
                     </Button>
                   )}
                   
+                  {/* Review button - only for completed */}
                   {booking.status === 'completed' && (
                     <Button 
                       variant="primary" 
                       size="sm"
-                      onClick={() => handleLeaveReview(booking.id)}
+                      onClick={() => handleLeaveReview(booking)}
                     >
                       Leave Review
                     </Button>
                   )}
                   
+                  {/* Contact button - always visible */}
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    onClick={() => console.log('Contact business')}
+                    onClick={() => handleContactBusiness(booking)}
                   >
                     💬 Contact Business
                   </Button>
@@ -277,6 +309,26 @@ export default function Bookings() {
           </Button>
         </div>
       )}
+
+      {/* Modals */}
+      <BookingDetailModal 
+        isOpen={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedBooking(null);
+        }}
+        booking={selectedBooking}
+      />
+
+      <CancelBookingModal 
+        isOpen={isCancelModalOpen}
+        onClose={() => {
+          setIsCancelModalOpen(false);
+          setSelectedBooking(null);
+        }}
+        booking={selectedBooking}
+        onConfirm={handleConfirmCancel}
+      />
     </div>
   );
 }

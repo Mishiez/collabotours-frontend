@@ -1,10 +1,11 @@
 import Button from '../common/Button';
 
-export default function CategoryCard({ id, name, icon, color, bgColor }) {
+export default function CategoryCard({ id, name, icon, color, bgColor, category, onClick }) {
   return (
     <div 
       className="group relative overflow-hidden rounded-2xl p-6 text-center transition-all duration-300 hover:-translate-y-1 cursor-pointer"
       style={{ backgroundColor: bgColor }}
+      onClick={() => onClick && onClick()}
     >
       <div className="text-5xl mb-3 transform transition-transform group-hover:scale-110">
         {icon}
