@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
-import Button from '../components/common/Button';
-import MessageBubble from '../components/modals/MessageBubble';
-import TypingIndicator from '../components/modals/TypingIndicator';
-import NewMessageModal from '../components/modals/NewMessageModal';
-import ContactInfoModal from '../components/modals/ContactInfoModal';
+import Button from '../../components/common/Button';
+import MessageBubble from '../../components/modals/MessageBubble';
+import TypingIndicator from '../../components/modals/TypingIndicator';
+import NewMessageModal from '../../components/modals/NewMessageModal';
+import ContactInfoModal from '../../components/modals/ContactInfoModal';
 import { 
   fetchConversations, 
   sendMessage,
   createConversation,
-} from '../services/api';
+} from '../../services/api';
 
 export default function Messages() {
   const [conversations, setConversations] = useState([]);

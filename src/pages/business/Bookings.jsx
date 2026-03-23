@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Button from '../components/common/Button';
-import BookingDetailsModal from '../components/modals/BookingDetailsModal';
-import EditBookingModal from '../components/modals/EditBookingModal';
-import NewBookingModal from '../components/modals/NewBookingModal';
-import CalendarViewModel from '../components/modals/CalendarViewModel';
+import Button from '../../components/common/Button';
+import BookingDetailsModal from '../../components/modals/BookingDetailsModal';
+import EditBookingModal from '../../components/modals/EditBookingModal';
+import NewBookingModal from '../../components/modals/NewBookingModal';
+import CalendarViewModel from '../../components/modals/CalendarViewModel';
 import { 
   fetchBookings, 
   createBooking, 
@@ -12,7 +12,7 @@ import {
   updateBookingStatus,
   deleteBooking,
   fetchServices 
-} from '../services/api';
+} from '../../services/api';
 
 // const initialBookings = [
 //   {

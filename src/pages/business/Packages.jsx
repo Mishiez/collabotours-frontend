@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import Button from '../components/common/Button';
-import AddPackageModal from '../components/modals/AddPackageModal';
-import ManagePackageModal from '../components/modals/ManagePackageModal';
-import { fetchPackages, createPackage, updatePackage, deletePackage } from '../services/api';
+import Button from '../../components/common/Button';
+import AddPackageModal from '../../components/modals/AddPackageModal';
+import ManagePackageModal from '../../components/modals/ManagePackageModal';
+import { fetchPackages, createPackage, updatePackage, deletePackage } from '../../services/api';
 
 // const initialPackages = [
 //   {

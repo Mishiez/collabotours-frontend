@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Button from '../components/common/Button';
-import ServiceCard from '../components/common/ServiceCard';
-import AddServiceModal from '../components/modals/AddServiceModal';
-import ManageServiceModal from '../components/modals/ManageServiceModal';
-import { fetchServices, createService, updateService, deleteService } from '../services/api';  // ADD THIS
+import Button from '../../components/common/Button';
+import ServiceCard from '../../components/common/ServiceCard';
+import AddServiceModal from '../../components/modals/AddServiceModal';
+import ManageServiceModal from '../../components/modals/ManageServiceModal';
+import { fetchServices, createService, updateService, deleteService } from '../../services/api';  // ADD THIS
 
 // Mock data - will be replaced with API data later
 // const allServices = [

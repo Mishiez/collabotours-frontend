@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Button from '../components/common/Button';
-import PartnerProfileModal from '../components/modals/PartnerProfileModal';
-import FindPartnersModal from '../components/modals/FindPartnersModal';
-import ApplyForOpportunityModal from '../components/modals/ApplyForOpportunityModal';
-import { fetchCollaborators } from '../services/api';
+import Button from '../../components/common/Button';
+import PartnerProfileModal from '../../components/modals/PartnerProfileModal';
+import FindPartnersModal from '../../components/modals/FindPartnersModal';
+import ApplyForOpportunityModal from '../../components/modals/ApplyForOpportunityModal';
+import { fetchCollaborators } from '../../services/api';
 
 // Move data into state inside component
 // const initialCollaborators = [

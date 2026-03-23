@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
-import Button from '../components/common/Button';
-import PayoutModal from '../components/modals/PayoutModal';
-import PaymentDetailsModal from '../components/modals/PaymentDetailsModal';
-import ExportModal from '../components/modals/ExportModal';
+import Button from '../../components/common/Button';
+import PayoutModal from '../../components/modals/PayoutModal';
+import PaymentDetailsModal from '../../components/modals/PaymentDetailsModal';
+import ExportModal from '../../components/modals/ExportModal';
 import { 
   fetchPayments, 
   createPayment, 
   updatePayment, 
   refundPayment,
   deletePayment 
-} from '../services/api';
+} from '../../services/api';
 
 const paymentStatusColors = {
   completed: 'bg-emerald-100 text-emerald-700',

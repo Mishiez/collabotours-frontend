@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import StatCard from '../components/common/StatCard';
-import ServiceCard from '../components/common/ServiceCard';
-import Button from '../components/common/Button';
-import ManageServiceModal from '../components/modals/ManageServiceModal';
-import { fetchDashboardStats, fetchRecentBookings, fetchTopServices } from '../services/api';
+import StatCard from '../../components/common/StatCard';
+import ServiceCard from '../../components/common/ServiceCard';
+import Button from '../../components/common/Button';
+import ManageServiceModal from '../../components/modals/ManageServiceModal';
+import { fetchDashboardStats, fetchRecentBookings, fetchTopServices } from '../../services/api';
 
 const statusBadge = {
   confirmed: 'bg-emerald-100 text-emerald-700',
