@@ -50,7 +50,7 @@ export default function App() {
             <BusinessLayout />
           </ProtectedRoute>
         }>
-          <Route index element={<Navigate to="/business/dashboard" replace />} />
+          <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="services" element={<MyServices />} />
           <Route path="packages" element={<Packages />} />

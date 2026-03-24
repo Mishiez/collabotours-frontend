@@ -3,13 +3,13 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext'; // ADD THIS
 
 const navItems = [
-  { label: 'Dashboard', path: '/dashboard', icon: '⊞' },
-  { label: 'My Services', path: '/services', icon: '🧩' },
-  { label: 'Packages', path: '/packages', icon: '📦' },
-  { label: 'Collaboration', path: '/collaboration', icon: '🤝' },
-  { label: 'Bookings', path: '/bookings', icon: '📅' },
-  { label: 'Messages', path: '/messages', icon: '💬' },
-  { label: 'Payments', path: '/payments', icon: '💳' },
+  { label: 'Dashboard', path: '/business/dashboard', icon: '⊞' },
+  { label: 'My Services', path: '/business/services', icon: '🧩' },
+  { label: 'Packages', path: '/business/packages', icon: '📦' },
+  { label: 'Collaboration', path: '/business/collaboration', icon: '🤝' },
+  { label: 'Bookings', path: '/business/bookings', icon: '📅' },
+  { label: 'Messages', path: '/business/messages', icon: '💬' },
+  { label: 'Payments', path: '/business/payments', icon: '💳' },
 ];
 
 export default function Sidebar() {

@@ -21,7 +21,7 @@ export default function Login() {
     const result = await login(username, password);
     
     if (result.success) {
-      navigate('/dashboard');
+      navigate('/business/dashboard');
     } else {
       setLocalError(result.error || 'Login failed. Please check your credentials.');
     }
