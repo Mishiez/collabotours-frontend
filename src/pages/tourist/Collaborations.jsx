@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Button from '../../components/common/Button';
+import TouristCollaborationCard from '../../components/tourist/TouristCollaborationCard';
 import CollaborationDetailModal from '../../components/tourist/modals/CollaborationDetailModal';
 import { fetchPublicCollaborations } from '../../services/api';
 
@@ -154,63 +155,18 @@ export default function Collaborations() {
       {filteredCollaborations.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredCollaborations.map(collab => (
-            <div 
+            <TouristCollaborationCard
               key={collab.id}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden cursor-pointer"
-              onClick={() => handleViewDeal(collab)}
-            >
-              {/* Header */}
-              <div className="bg-gradient-to-r from-[#003D5B] to-[#30638E] p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs bg-[#EDAE49] text-[#003D5B] px-2 py-1 rounded-full font-semibold">
-                        🤝 Partnership
-                      </span>
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-1">{collab.name}</h3>
-                    <p className="text-sm text-white/80">{collab.type} • {collab.location}</p>
-                  </div>
-                  <div className="flex items-center gap-1 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                    <span className="text-yellow-400">★</span>
-                    <span className="text-white font-medium">{collab.rating || 'New'}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="p-5">
-                <div className="mb-4">
-                  <p className="text-sm text-gray-500 mb-2">
-                    Partner businesses: 
-                    <span className="font-medium text-[#003D5B]"> {collab.business_name} & {collab.partner_name || 'Partner'}</span>
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div>
-                    <p className="text-xs text-gray-400">Status</p>
-                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                      collab.status === 'active' 
-                        ? 'bg-emerald-100 text-emerald-700' 
-                        : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      {collab.status === 'active' ? 'Active Partnership' : 'Inactive'}
-                    </span>
-                  </div>
-                  <Button 
-                    variant="primary" 
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleViewDeal(collab);
-                    }}
-                  >
-                    View Partnership
-                  </Button>
-                </div>
-              </div>
-            </div>
+              id={collab.id}
+              name={collab.name}
+              type={collab.type}
+              location={collab.location}
+              rating={collab.rating}
+              status={collab.status}
+              business_name={collab.business_name}
+              partner_name={collab.partner_name}
+              onViewDetails={() => handleViewDeal(collab)}
+            />
           ))}
         </div>
       ) : (

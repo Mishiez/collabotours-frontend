@@ -4,11 +4,9 @@ export default function TouristPackageCard({
   id, 
   name, 
   price, 
-  originalPrice, 
   duration, 
   services, 
   business, 
-  rating, 
   discount, 
   image,
   onViewDetails 
@@ -30,14 +28,6 @@ export default function TouristPackageCard({
             </span>
           </div>
         )}
-        
-        {/* Rating badge */}
-        <div className="absolute top-3 right-3">
-          <div className="flex items-center gap-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
-            <span className="text-yellow-500 text-xs">★</span>
-            <span className="text-xs font-semibold text-[#003D5B]">{rating || '4.8'}</span>
-          </div>
-        </div>
       </div>
 
       {/* Content */}
@@ -53,14 +43,7 @@ export default function TouristPackageCard({
           <div>
             <div className="flex items-center gap-2">
               <p className="text-xl font-bold text-[#EDAE49]">${price}</p>
-              {originalPrice && (
-                <p className="text-sm text-gray-400 line-through">${originalPrice}</p>
-              )}
             </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-yellow-500 text-sm">★</span>
-            <span className="text-sm font-medium text-[#003D5B]">{rating}</span>
           </div>
         </div>
 
@@ -70,6 +53,8 @@ export default function TouristPackageCard({
           className="w-full justify-center mt-4"
           onClick={(e) => {
             e.stopPropagation();
+            console.log('Button inside TouristPackageCard clicked');
+            console.log('onViewDetails exists?', !!onViewDetails);
             onViewDetails && onViewDetails();
           }}
         >

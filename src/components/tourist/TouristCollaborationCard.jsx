@@ -3,12 +3,12 @@ import Button from '../common/Button';
 export default function TouristCollaborationCard({ 
   id, 
   name, 
-  businesses, 
-  price, 
-  originalPrice, 
-  description, 
+  type, 
+  location, 
   rating, 
-  discount,
+  status,
+  business_name,
+  partner_name,
   onViewDetails 
 }) {
   return (
@@ -21,14 +21,16 @@ export default function TouristCollaborationCard({
         <div className="flex justify-between items-start">
           <div>
             <span className="text-xs bg-[#EDAE49] text-[#003D5B] px-2 py-1 rounded-full font-semibold">
-              🤝 Partnered Experience
+              🤝 Partnership
             </span>
           </div>
-          {discount && (
-            <span className="text-xs font-bold bg-white/20 text-white px-2 py-1 rounded-full">
-              Save {discount}
-            </span>
-          )}
+          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+            status === 'active' 
+              ? 'bg-emerald-500/20 text-emerald-300' 
+              : 'bg-gray-500/20 text-gray-300'
+          }`}>
+            {status === 'active' ? 'Active' : 'Inactive'}
+          </span>
         </div>
       </div>
 
@@ -36,41 +38,30 @@ export default function TouristCollaborationCard({
       <div className="p-4">
         <h3 className="font-bold text-[#003D5B] text-lg mb-2">{name}</h3>
         
-        <div className="flex flex-wrap gap-2 mb-3">
-          {businesses && businesses.map((business, index) => (
-            <span key={index} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-              {business}
-            </span>
-          ))}
-        </div>
+        <p className="text-sm text-gray-500 mb-2">{type} • {location}</p>
         
-        <p className="text-sm text-gray-500 mb-3 line-clamp-2">{description}</p>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-yellow-500 text-sm">★</span>
+          <span className="text-sm font-medium text-[#003D5B]">{rating || 'New'}</span>
+        </div>
 
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <p className="text-xl font-bold text-[#EDAE49]">${price}</p>
-              {originalPrice && (
-                <p className="text-sm text-gray-400 line-through">${originalPrice}</p>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-yellow-500 text-sm">★</span>
-            <span className="text-sm font-medium text-[#003D5B]">{rating}</span>
-          </div>
+        <div className="mb-4">
+          <p className="text-xs text-gray-400">Partner businesses</p>
+          <p className="text-sm text-gray-600">
+            {business_name} & {partner_name}
+          </p>
         </div>
 
         <Button 
           variant="primary" 
           size="sm" 
-          className="w-full justify-center mt-4"
+          className="w-full justify-center"
           onClick={(e) => {
             e.stopPropagation();
             onViewDetails && onViewDetails();
           }}
         >
-          View Deal
+          View Partnership
         </Button>
       </div>
     </div>

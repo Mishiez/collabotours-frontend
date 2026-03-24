@@ -85,6 +85,7 @@ export default function Packages() {
   });
 
   const handleViewPackage = (pkg) => {
+    console.log('View package clicked:', pkg);
     setSelectedPackage(pkg);
     setIsModalOpen(true);
   };
@@ -112,6 +113,16 @@ export default function Packages() {
         <h1 className="text-3xl font-bold text-[#003D5B] mb-2">Special Packages</h1>
         <p className="text-gray-500">Bundle deals for better value on your Kenyan adventure</p>
       </div>
+
+      <button 
+        onClick={() => {
+          console.log('Test button clicked');
+          handleViewPackage({ name: 'test' });
+        }}
+        className="bg-red-500 text-white p-2 mb-4"
+      >
+        TEST BUTTON
+      </button>
 
       {/* Search Bar */}
       <div className="mb-6">

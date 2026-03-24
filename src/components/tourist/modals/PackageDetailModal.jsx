@@ -8,6 +8,9 @@ export default function PackageDetailModal({ isOpen, onClose, pkg }) {
   
   if (!pkg) return null;
 
+  // Calculate services count safely
+  const servicesCount = pkg.services ? pkg.services.length : 0;
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={pkg.name} size="lg">
       <div className="space-y-5">
@@ -15,11 +18,7 @@ export default function PackageDetailModal({ isOpen, onClose, pkg }) {
         <div className="flex items-center justify-between pb-3 border-b border-gray-100">
           <div>
             <p className="text-sm text-gray-400">Offered by</p>
-            <p className="font-semibold text-[#003D5B]">{pkg.business}</p>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-yellow-500">★</span>
-            <span className="font-medium">{pkg.rating}</span>
+            <p className="font-semibold text-[#003D5B]">{pkg.business_name || pkg.business || 'Local Business'}</p>
           </div>
         </div>
 
@@ -40,15 +39,11 @@ export default function PackageDetailModal({ isOpen, onClose, pkg }) {
         <div className="grid grid-cols-2 gap-3 bg-gray-50 p-4 rounded-xl">
           <div>
             <p className="text-xs text-gray-400">Duration</p>
-            <p className="font-medium text-[#003D5B]">{pkg.duration}</p>
+            <p className="font-medium text-[#003D5B]">{pkg.duration || 'Not specified'}</p>
           </div>
           <div>
             <p className="text-xs text-gray-400">Included Services</p>
-            <p className="font-medium text-[#003D5B]">{pkg.services} experiences</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400">Original Price</p>
-            <p className="text-sm text-gray-400 line-through">${pkg.originalPrice}</p>
+            <p className="font-medium text-[#003D5B]">{servicesCount} {servicesCount === 1 ? 'experience' : 'experiences'}</p>
           </div>
           <div>
             <p className="text-xs text-gray-400">Package Price</p>
