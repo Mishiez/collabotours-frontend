@@ -1,91 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TouristServiceCard from '../../components/tourist/TouristServiceCard';
 import ServiceDetailModal from '../../components/tourist/modals/ServiceDetailModal';
 import Button from '../../components/common/Button';
+import { fetchPublicServices } from '../../services/api';
 
-// All services from all businesses
-const allServices = [
-  {
-    id: 1,
-    name: 'Masai Mara Safari Adventure',
-    category: 'Wildlife',
-    price: '350',
-    bookings: 156,
-    image: null,
-    business: 'Safari Kenya',
-    rating: 4.9,
-    duration: 'Full day',
-    location: 'Masai Mara',
-    description: 'Full-day safari in Masai Mara with experienced guides. Includes lunch, park fees, and transport from Nairobi.'
-  },
-  {
-    id: 2,
-    name: 'Diani Beach Getaway',
-    category: 'Beach',
-    price: '499',
-    bookings: 234,
-    image: null,
-    business: 'Beach Paradise',
-    rating: 4.8,
-    duration: '3 days',
-    location: 'Diani Beach',
-    description: '3-day beach retreat including luxury accommodation, snorkeling, and sunset dhow cruise.'
-  },
-  {
-    id: 3,
-    name: 'Hot Air Balloon Safari',
-    category: 'Adventure',
-    price: '450',
-    bookings: 89,
-    image: null,
-    business: 'Safari Kenya',
-    rating: 4.9,
-    duration: '3 hours',
-    location: 'Masai Mara',
-    description: 'Sunrise balloon ride over the Masai Mara with champagne breakfast.'
-  },
-  {
-    id: 4,
-    name: 'Lamu Old Town Walking Tour',
-    category: 'Culture',
-    price: '65',
-    bookings: 178,
-    image: null,
-    business: 'Cultural Tours',
-    rating: 4.8,
-    duration: 'Half day',
-    location: 'Lamu Island',
-    description: 'Guided tour through historic Lamu Town, a UNESCO World Heritage site.'
-  },
-  {
-    id: 5,
-    name: 'Watersports Package',
-    category: 'Water Activities',
-    price: '180',
-    bookings: 312,
-    image: null,
-    business: 'Beach Paradise',
-    rating: 4.7,
-    duration: 'Full day',
-    location: 'Diani Beach',
-    description: 'Jet skiing, parasailing, and banana boat rides. All equipment included.'
-  },
-  {
-    id: 6,
-    name: 'Swahili Cooking Class',
-    category: 'Culture',
-    price: '85',
-    bookings: 67,
-    image: null,
-    business: 'Cultural Tours',
-    rating: 4.9,
-    duration: '3 hours',
-    location: 'Mombasa',
-    description: 'Learn to cook traditional Swahili dishes with local chefs. Includes market visit and lunch.'
-  }
-];
-
-// Filter categories
+// Filter categories (based on backend categories)
 const categories = [
   'All',
   'Wildlife',
@@ -100,11 +19,14 @@ const sortOptions = [
   { value: 'featured', label: 'Featured' },
   { value: 'price_low', label: 'Price: Low to High' },
   { value: 'price_high', label: 'Price: High to Low' },
-  { value: 'rating', label: 'Highest Rated' },
   { value: 'popular', label: 'Most Popular' }
 ];
 
 export default function Services() {
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('featured');
   const [searchQuery, setSearchQuery] = useState('');
@@ -113,12 +35,32 @@ export default function Services() {
   const [selectedService, setSelectedService] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Fetch services from backend
+  useEffect(() => {
+    loadServices();
+  }, []);
+
+  const loadServices = async () => {
+    try {
+      setLoading(true);
+      const response = await fetchPublicServices();
+      console.log('Services loaded:', response.data);
+      setServices(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to load services:', err);
+      setError('Could not load services. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Filter services
-  let filteredServices = allServices.filter(service => {
+  let filteredServices = services.filter(service => {
     const matchesCategory = selectedCategory === 'All' || service.category === selectedCategory;
     const matchesSearch = service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         service.business.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         service.location.toLowerCase().includes(searchQuery.toLowerCase());
+                         (service.business_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (service.location || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
@@ -129,10 +71,8 @@ export default function Services() {
         return parseFloat(a.price) - parseFloat(b.price);
       case 'price_high':
         return parseFloat(b.price) - parseFloat(a.price);
-      case 'rating':
-        return b.rating - a.rating;
       case 'popular':
-        return b.bookings - a.bookings;
+        return (b.bookings_count || 0) - (a.bookings_count || 0);
       default:
         return 0;
     }
@@ -142,6 +82,22 @@ export default function Services() {
     setSelectedService(service);
     setIsModalOpen(true);
   };
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8 text-center">
+        <p className="text-gray-500">Loading experiences...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8 text-center">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -209,7 +165,13 @@ export default function Services() {
           {filteredServices.map(service => (
             <TouristServiceCard 
               key={service.id} 
-              {...service} 
+              id={service.id}
+              name={service.name}
+              category={service.category}
+              price={service.price}
+              business={service.business_name || 'Local Business'}
+              location={service.location}
+              description={service.description}
               onViewDetails={() => handleViewService(service)}
             />
           ))}

@@ -1,86 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TouristPackageCard from '../../components/tourist/TouristPackageCard';
 import PackageDetailModal from '../../components/tourist/modals/PackageDetailModal';
 import Button from '../../components/common/Button';
+import { fetchPublicPackages } from '../../services/api';
 
-// All packages from all businesses
-const allPackages = [
-  {
-    id: 1,
-    name: 'Ultimate Safari Experience',
-    price: '899',
-    originalPrice: '1050',
-    duration: '4 days',
-    services: 3,
-    business: 'Safari Kenya',
-    rating: 4.9,
-    discount: '15%',
-    image: null,
-    description: 'Experience the best of Masai Mara with this comprehensive safari package'
-  },
-  {
-    id: 2,
-    name: 'Beach & Culture Combo',
-    price: '749',
-    originalPrice: '830',
-    duration: '5 days',
-    services: 3,
-    business: 'Beach Paradise',
-    rating: 4.7,
-    discount: '10%',
-    image: null,
-    description: 'Combine beach relaxation with cultural experiences in Mombasa'
-  },
-  {
-    id: 3,
-    name: 'Adventure Week',
-    price: '1299',
-    originalPrice: '1620',
-    duration: '7 days',
-    services: 4,
-    business: 'Cultural Tours',
-    rating: 4.8,
-    discount: '20%',
-    image: null,
-    description: 'A week of adventure combining wildlife, hiking, and cultural tours'
-  },
-  {
-    id: 4,
-    name: 'Romantic Beach Escape',
-    price: '599',
-    originalPrice: '720',
-    duration: '3 days',
-    services: 2,
-    business: 'Beach Paradise',
-    rating: 4.9,
-    discount: '17%',
-    image: null,
-    description: 'Perfect for couples - private beach dinner, sunset cruise, luxury accommodation'
-  },
-  {
-    id: 5,
-    name: 'Family Safari Adventure',
-    price: '1099',
-    originalPrice: '1350',
-    duration: '5 days',
-    services: 4,
-    business: 'Safari Kenya',
-    rating: 4.8,
-    discount: '19%',
-    image: null,
-    description: 'Kid-friendly safari experience with educational activities'
-  }
-];
-
-// Filter categories (by business or type)
+// Filter categories
 const categories = [
   'All',
   'Safari',
   'Beach',
   'Culture',
-  'Adventure',
-  'Romantic',
-  'Family'
+  'Adventure'
 ];
 
 // Sort options
@@ -89,10 +19,14 @@ const sortOptions = [
   { value: 'price_low', label: 'Price: Low to High' },
   { value: 'price_high', label: 'Price: High to Low' },
   { value: 'discount', label: 'Biggest Discount' },
-  { value: 'rating', label: 'Highest Rated' }
+  { value: 'popular', label: 'Most Popular' }
 ];
 
 export default function Packages() {
+  const [packages, setPackages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('featured');
   const [searchQuery, setSearchQuery] = useState('');
@@ -101,14 +35,34 @@ export default function Packages() {
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Fetch packages from backend
+  useEffect(() => {
+    loadPackages();
+  }, []);
+
+  const loadPackages = async () => {
+    try {
+      setLoading(true);
+      const response = await fetchPublicPackages();
+      console.log('Packages loaded:', response.data);
+      setPackages(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to load packages:', err);
+      setError('Could not load packages. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Filter packages
-  let filteredPackages = allPackages.filter(pkg => {
+  let filteredPackages = packages.filter(pkg => {
     const matchesCategory = selectedCategory === 'All' || 
       pkg.name.toLowerCase().includes(selectedCategory.toLowerCase()) ||
-      pkg.business.toLowerCase().includes(selectedCategory.toLowerCase());
+      (pkg.business_name || '').toLowerCase().includes(selectedCategory.toLowerCase());
     const matchesSearch = pkg.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         pkg.business.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         pkg.description.toLowerCase().includes(searchQuery.toLowerCase());
+                         (pkg.business_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (pkg.description || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
@@ -120,9 +74,11 @@ export default function Packages() {
       case 'price_high':
         return parseFloat(b.price) - parseFloat(a.price);
       case 'discount':
-        return parseFloat(b.discount) - parseFloat(a.discount);
-      case 'rating':
-        return b.rating - a.rating;
+        const discountA = parseFloat(a.discount) || 0;
+        const discountB = parseFloat(b.discount) || 0;
+        return discountB - discountA;
+      case 'popular':
+        return (b.bookings || 0) - (a.bookings || 0);
       default:
         return 0;
     }
@@ -132,6 +88,22 @@ export default function Packages() {
     setSelectedPackage(pkg);
     setIsModalOpen(true);
   };
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8 text-center">
+        <p className="text-gray-500">Loading packages...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8 text-center">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -198,8 +170,15 @@ export default function Packages() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPackages.map(pkg => (
             <TouristPackageCard 
-              key={pkg.id} 
-              {...pkg} 
+              key={pkg.id}
+              id={pkg.id}
+              name={pkg.name}
+              price={pkg.price}
+              discount={pkg.discount}
+              duration={pkg.duration}
+              services={pkg.services ? pkg.services.length : 0}
+              business={pkg.business_name || 'Local Business'}
+              description={pkg.description}
               onViewDetails={() => handleViewPackage(pkg)}
             />
           ))}

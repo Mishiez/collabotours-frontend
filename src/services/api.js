@@ -177,6 +177,14 @@ export const fetchTopServices = () => API.get('services/?ordering=-bookings_coun
 // ============ REVENUE API CALLS ============
 export const fetchRevenueBreakdown = () => API.get('dashboard/revenue/');
 
+
+// ============ PUBLIC TOURIST ENDPOINTS ============
+// These don't require authentication
+
+export const fetchPublicServices = () => API.get('public/services/');
+export const fetchPublicPackages = () => API.get('public/packages/');
+export const fetchPublicCollaborations = () => API.get('public/collaborations/');
+
 // You can add more API calls here later
 // export const fetchBookings = () => API.get('bookings/');
 // etc.
