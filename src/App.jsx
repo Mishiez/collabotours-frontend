@@ -39,7 +39,7 @@ export default function App() {
           <Route path="/tourist/packages" element={<TouristPackages />} />        // ADD
           <Route path="/tourist/bookings" element={<TouristBookings />} />        // ADD
           <Route path="/tourist/messages" element={<TouristMessages />} />        // ADD
-          <Route path="/tourist/checkout/:id" element={<Checkout />} />           // ADD
+          <Route path="/tourist/checkout" element={<Checkout />} />           // ADD
           <Route path="/tourist/collaborations" element={<TouristCollaborations />} />  // ADD
           {/* Add more tourist routes here */}
         </Route>

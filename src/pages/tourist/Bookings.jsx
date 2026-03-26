@@ -1,71 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/common/Button';
 import BookingDetailModal from '../../components/tourist/modals/BookingDetailModal';
 import CancelBookingModal from '../../components/tourist/modals/CancelBookingModal';
-
-// Sample booking data for a tourist
-const myBookings = [
-  {
-    id: 'BK-001',
-    type: 'service',
-    name: 'Masai Mara Safari Adventure',
-    business: 'Safari Kenya',
-    date: '2026-03-25',
-    guests: 2,
-    amount: '700',
-    status: 'confirmed',
-    image: null,
-    bookingDate: '2026-02-10'
-  },
-  {
-    id: 'BK-002',
-    type: 'package',
-    name: 'Beach & Culture Combo',
-    business: 'Beach Paradise',
-    date: '2026-03-20',
-    guests: 4,
-    amount: '2996',
-    status: 'pending',
-    image: null,
-    bookingDate: '2026-02-15'
-  },
-  {
-    id: 'BK-003',
-    type: 'service',
-    name: 'Lamu Old Town Walking Tour',
-    business: 'Cultural Tours',
-    date: '2026-02-26',
-    guests: 1,
-    amount: '65',
-    status: 'completed',
-    image: null,
-    bookingDate: '2026-01-20'
-  },
-  {
-    id: 'BK-004',
-    type: 'collaboration',
-    name: 'Safari & Beach Combo',
-    business: 'Safari Kenya + Beach Paradise',
-    date: '2026-02-27',
-    guests: 2,
-    amount: '2398',
-    status: 'cancelled',
-    image: null,
-    bookingDate: '2026-01-25'
-  },
-  {
-    id: 'BK-005',
-    type: 'service',
-    name: 'Hot Air Balloon Safari',
-    business: 'Safari Kenya',
-    date: '2026-04-10',
-    guests: 2,
-    amount: '900',
-    status: 'confirmed',
-    image: null,
-    bookingDate: '2026-03-01'
-  }
-];
+import { fetchBookings } from '../../services/api';
 
 const statusConfig = {
   confirmed: {
@@ -97,17 +35,39 @@ const typeIcon = {
 };
 
 export default function Bookings() {
+  const { user } = useAuth();
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('upcoming');
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
+  useEffect(() => {
+    loadBookings();
+  }, []);
+
+  const loadBookings = async () => {
+    try {
+      setLoading(true);
+      const response = await fetchBookings();
+      console.log('Bookings loaded:', response.data);
+      setBookings(response.data);
+    } catch (err) {
+      console.error('Failed to load bookings:', err);
+      setError('Could not load your bookings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Filter based on status only
-  const upcomingBookings = myBookings.filter(booking => 
+  const upcomingBookings = bookings.filter(booking => 
     booking.status === 'confirmed' || booking.status === 'pending'
   );
 
-  const pastBookings = myBookings.filter(booking => 
+  const pastBookings = bookings.filter(booking => 
     booking.status === 'completed' || booking.status === 'cancelled'
   );
 
@@ -141,6 +101,22 @@ export default function Bookings() {
     return new Date(dateString).toLocaleDateString('en-US', options);
   };
 
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8 text-center">
+        <p className="text-gray-500">Loading your trips...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8 text-center">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
@@ -152,10 +128,7 @@ export default function Bookings() {
       {/* Tabs */}
       <div className="flex gap-4 mb-6 border-b border-gray-200">
         <button
-          onClick={() => {
-            console.log('Switching to Upcoming tab');
-            setActiveTab('upcoming');
-          }}
+          onClick={() => setActiveTab('upcoming')}
           className={`px-4 py-2 text-sm font-medium transition-all relative ${
             activeTab === 'upcoming'
               ? 'text-[#EDAE49]'
@@ -173,10 +146,7 @@ export default function Bookings() {
           )}
         </button>
         <button
-          onClick={() => {
-            console.log('Switching to Past Trips tab');
-            setActiveTab('past');
-          }}
+          onClick={() => setActiveTab('past')}
           className={`px-4 py-2 text-sm font-medium transition-all relative ${
             activeTab === 'past'
               ? 'text-[#EDAE49]'
@@ -195,11 +165,6 @@ export default function Bookings() {
         </button>
       </div>
 
-      {/* Debug: Show which tab is active */}
-      <div className="text-xs text-gray-400 mb-2">
-        Active tab: {activeTab} | Showing: {bookingsToShow.length} bookings
-      </div>
-
       {/* Bookings List */}
       {bookingsToShow.length > 0 ? (
         <div className="space-y-4">
@@ -213,16 +178,20 @@ export default function Bookings() {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-[#003D5B]/10 flex items-center justify-center text-xl">
-                      {typeIcon[booking.type]}
+                      {typeIcon[booking.type] || '🎯'}
                     </div>
                     <div>
-                      <h3 className="font-bold text-[#003D5B] text-lg">{booking.name}</h3>
-                      <p className="text-sm text-gray-500">by {booking.business}</p>
+                      <h3 className="font-bold text-[#003D5B] text-lg">
+                        {typeof booking.service === 'object' ? booking.service.name : booking.service}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        by {typeof booking.service === 'object' ? booking.service.business_name : booking.business}
+                      </p>
                     </div>
                   </div>
-                  <span className={`text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1 ${statusConfig[booking.status].color}`}>
-                    <span>{statusConfig[booking.status].icon}</span>
-                    {statusConfig[booking.status].label}
+                  <span className={`text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1 ${statusConfig[booking.status]?.color || 'bg-gray-100 text-gray-500'}`}>
+                    <span>{statusConfig[booking.status]?.icon || '📌'}</span>
+                    {statusConfig[booking.status]?.label || booking.status}
                   </span>
                 </div>
 
@@ -238,11 +207,11 @@ export default function Bookings() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-400">Total Paid</p>
-                    <p className="font-bold text-[#EDAE49]">${booking.amount}</p>
+                    <p className="font-bold text-[#EDAE49]">KES {booking.amount}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-400">Booking ID</p>
-                    <p className="font-mono text-sm text-gray-500">{booking.id}</p>
+                    <p className="font-mono text-sm text-gray-500">{booking.booking_id}</p>
                   </div>
                 </div>
 
@@ -256,7 +225,6 @@ export default function Bookings() {
                     View Details
                   </Button>
                   
-                  {/* Cancel button - only for confirmed/pending */}
                   {(booking.status === 'confirmed' || booking.status === 'pending') && (
                     <Button 
                       variant="outline" 
@@ -268,7 +236,6 @@ export default function Bookings() {
                     </Button>
                   )}
                   
-                  {/* Review button - only for completed */}
                   {booking.status === 'completed' && (
                     <Button 
                       variant="primary" 
@@ -279,7 +246,6 @@ export default function Bookings() {
                     </Button>
                   )}
                   
-                  {/* Contact button - always visible */}
                   <Button 
                     variant="ghost" 
                     size="sm"

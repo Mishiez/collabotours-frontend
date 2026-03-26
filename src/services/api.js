@@ -185,6 +185,9 @@ export const fetchPublicServices = () => API.get('public/services/');
 export const fetchPublicPackages = () => API.get('public/packages/');
 export const fetchPublicCollaborations = () => API.get('public/collaborations/');
 
+// ============ M-PESA PAYMENT API CALLS ============
+
+export const initiateMpesaPayment = (paymentData) => API.post('mpesa/stkpush/', paymentData);
 // You can add more API calls here later
 // export const fetchBookings = () => API.get('bookings/');
 // etc.

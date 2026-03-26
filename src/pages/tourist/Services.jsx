@@ -3,6 +3,7 @@ import TouristServiceCard from '../../components/tourist/TouristServiceCard';
 import ServiceDetailModal from '../../components/tourist/modals/ServiceDetailModal';
 import Button from '../../components/common/Button';
 import { fetchPublicServices } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 // Filter categories (based on backend categories)
 const categories = [
