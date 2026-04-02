@@ -104,7 +104,7 @@ export default function PackageForm({ initialData = {}, onSubmit, onCancel, isEd
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Price ($)
+            Price (Ksh)
           </label>
           <input
             type="number"
@@ -158,7 +158,7 @@ export default function PackageForm({ initialData = {}, onSubmit, onCancel, isEd
                     className="rounded border-gray-300 text-[#EDAE49] focus:ring-[#EDAE49]"
                   />
                   <span className="text-sm text-gray-700">
-                    {service.name} <span className="text-gray-400">(${service.price})</span>
+                    {service.name} <span className="text-gray-400">(Ksh {service.price})</span>
                   </span>
                 </label>
               ))

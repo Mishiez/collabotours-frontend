@@ -62,7 +62,7 @@ export default function ServiceForm({ initialData = {}, onSubmit, onCancel, isEd
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Price ($)
+            Price (Ksh)
           </label>
           <input
             type="number"

@@ -185,7 +185,7 @@ export default function Packages() {
               <div className="flex items-end justify-between mb-5">
                 <div>
                   <p className="text-xs text-gray-400">Package Price</p>
-                  <p className="text-2xl font-bold text-[#EDAE49]">${pkg.price}</p>
+                  <p className="text-2xl font-bold text-[#EDAE49]">Ksh {pkg.price}</p>
                 </div>
                 {pkg.discount && (
                   <div className="text-right">

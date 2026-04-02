@@ -37,7 +37,7 @@ export default function ServiceCard({ id, name, category, price, bookings, statu
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-xs text-gray-400">From</p>
-            <p className="text-lg font-bold text-[#EDAE49]">${price}</p>
+            <p className="text-lg font-bold text-[#EDAE49]">Ksh {price}</p>
           </div>
           <div className="text-right">
             <p className="text-xs text-gray-400">Bookings</p>
