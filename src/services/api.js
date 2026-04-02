@@ -185,6 +185,12 @@ export const fetchPublicServices = () => API.get('public/services/');
 export const fetchPublicPackages = () => API.get('public/packages/');
 export const fetchPublicCollaborations = () => API.get('public/collaborations/');
 
+// ============ BUSINESS COLLABORATION SETTINGS ============
+
+export const getCollaborationSettings = () => API.get('business/collaboration-settings/');
+export const updateCollaborationSettings = (isOpen) => API.post('business/collaboration-settings/', { is_open_for_collaboration: isOpen });
+export const getOpenCollaborationBusinesses = () => API.get('business/open-collaboration-businesses/');
+
 // ============ M-PESA PAYMENT API CALLS ============
 
 export const initiateMpesaPayment = (paymentData) => API.post('mpesa/stkpush/', paymentData);

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';  // ADD THIS
 import StatCard from '../../components/common/StatCard';
 import ServiceCard from '../../components/common/ServiceCard';
 import Button from '../../components/common/Button';
@@ -14,6 +15,7 @@ const statusBadge = {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();  // ADD THIS - get logged-in user
   
   // State for dashboard data
   const [stats, setStats] = useState([
@@ -137,6 +139,13 @@ export default function Dashboard() {
     return `${currency}${parseFloat(amount).toFixed(0)}`;
   };
 
+  // Get business name (username or first_name)
+  const getBusinessName = () => {
+    if (user?.first_name) return user.first_name;
+    if (user?.username) return user.username;
+    return 'Business Owner';
+  };
+
   if (loading) {
     return (
       <div className="p-8 max-w-7xl mx-auto flex items-center justify-center min-h-screen">
@@ -159,13 +168,12 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-[#00798C] mb-1">Business Dashboard</p>
-          <h1 className="text-3xl font-bold text-[#003D5B]">Good morning, Jane 👋</h1>
-          <p className="text-gray-400 text-sm mt-1">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline" size="md" icon="🔔" onClick={() => navigate('/messages')}>Notifications</Button>
-        </div>
+  <p className="text-xs font-semibold uppercase tracking-widest text-[#00798C] mb-1">Business Dashboard</p>
+  <h1 className="text-3xl font-bold text-[#003D5B]">
+    {getBusinessName()}
+  </h1>
+  <p className="text-gray-400 text-sm mt-1">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
+</div>
       </div>
 
       {/* Stats */}
