@@ -2,8 +2,9 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import BusinessLayout from './components/layout/BusinessLayout';
-import TouristLayout from './components/layout/TouristLayout';  // ADD THIS
+import TouristLayout from './components/layout/TouristLayout';
 import Login from './pages/Login';
+import Register from './pages/business/Register';  // ADD THIS IMPORT
 
 // Business pages
 import Dashboard from './pages/business/Dashboard';
@@ -17,12 +18,11 @@ import Payments from './pages/business/Payments';
 // Tourist pages
 import Home from './pages/tourist/Home';
 import Services from './pages/tourist/Services';
-import TouristPackages from './pages/tourist/Packages';    // ADD
-import TouristBookings from './pages/tourist/Bookings';    // ADD
-import TouristMessages from './pages/tourist/Messages';    // ADD
-import Checkout from './pages/tourist/Checkout';   
-import TouristCollaborations from './pages/tourist/Collaborations';  // ADD
-
+import TouristPackages from './pages/tourist/Packages';
+import TouristBookings from './pages/tourist/Bookings';
+import TouristMessages from './pages/tourist/Messages';
+import Checkout from './pages/tourist/Checkout';
+import TouristCollaborations from './pages/tourist/Collaborations';
 
 export default function App() {
   return (
@@ -30,18 +30,18 @@ export default function App() {
       <Routes>
         {/* Public routes - no authentication needed */}
         <Route path="/login" element={<Login />} />
-        
+        <Route path="/business/register" element={<Register />} />  {/* ADD THIS LINE */}
+
         {/* Tourist routes - with TouristLayout */}
         <Route element={<TouristLayout />}>
           <Route path="/" element={<Navigate to="/tourist/home" replace />} />
           <Route path="/tourist/home" element={<Home />} />
           <Route path="/tourist/services" element={<Services />} />
-          <Route path="/tourist/packages" element={<TouristPackages />} />        // ADD
-          <Route path="/tourist/bookings" element={<TouristBookings />} />        // ADD
-          <Route path="/tourist/messages" element={<TouristMessages />} />        // ADD
-          <Route path="/tourist/checkout" element={<Checkout />} />           // ADD
-          <Route path="/tourist/collaborations" element={<TouristCollaborations />} />  // ADD
-          {/* Add more tourist routes here */}
+          <Route path="/tourist/packages" element={<TouristPackages />} />
+          <Route path="/tourist/bookings" element={<TouristBookings />} />
+          <Route path="/tourist/messages" element={<TouristMessages />} />
+          <Route path="/tourist/checkout" element={<Checkout />} />
+          <Route path="/tourist/collaborations" element={<TouristCollaborations />} />
         </Route>
         
         {/* Business routes - require authentication */}

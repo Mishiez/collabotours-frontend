@@ -198,20 +198,12 @@ export default function Packages() {
               {/* Actions */}
               <div className="flex gap-2">
                 <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => handleEditClick(pkg)}
-                >
-                  Edit
-                </Button>
-                <Button 
                   variant="primary" 
                   size="sm" 
-                  className="flex-1"
-                  onClick={() => handleViewDetails(pkg)}
+                  className="w-full"
+                  onClick={() => handleEditClick(pkg)}
                 >
-                  View Details
+                  Manage Package
                 </Button>
               </div>
             </div>

@@ -11,7 +11,6 @@ export default function ManagePackageModal({ isOpen, onClose, package: pkg, onUp
 
   const menuItems = [
     { id: 'edit', icon: '📝', label: 'Edit Package', color: '#003D5B' },
-    { id: 'details', icon: '🔍', label: 'View Details', color: '#00798C' },
     { id: 'analytics', icon: '📊', label: 'View Analytics', color: '#30638E' },
     { id: 'status', icon: '🔄', label: 'Change Status', color: '#EDAE49' },
     { id: 'delete', icon: '❌', label: 'Delete Package', color: '#D1495B' },

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
 
@@ -21,7 +21,12 @@ export default function Login() {
     const result = await login(username, password);
     
     if (result.success) {
-      navigate('/business/dashboard');
+      // Redirect based on user role
+      if (result.role === 'business') {
+        navigate('/business/dashboard');
+      } else {
+        navigate('/tourist/home');
+      }
     } else {
       setLocalError(result.error || 'Login failed. Please check your credentials.');
     }
@@ -34,7 +39,7 @@ export default function Login() {
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-[#003D5B]">CollaboTours</h1>
-          <p className="text-gray-400 mt-2">Business Dashboard Login</p>
+          <p className="text-gray-400 mt-2">Sign in to your account</p>
         </div>
         
         {localError && (
@@ -93,14 +98,21 @@ export default function Login() {
         </form>
         
         <div className="mt-6 text-center text-sm text-gray-400">
-          <p>Demo credentials:</p>
+          <p>Don't have an account?{' '}
+            <Link to="/business/register" className="text-[#EDAE49] hover:underline">
+              Register your business
+            </Link>
+          </p>
+          <p className="mt-4">Demo credentials:</p>
           <p className="mt-1">
             <span className="font-mono bg-gray-100 px-2 py-1 rounded">safari_kenya</span> / 
             <span className="font-mono bg-gray-100 px-2 py-1 rounded ml-1">password123</span>
+            <span className="ml-2 text-xs text-gray-400">(Business)</span>
           </p>
           <p className="mt-1">
-            <span className="font-mono bg-gray-100 px-2 py-1 rounded">beach_paradise</span> / 
+            <span className="font-mono bg-gray-100 px-2 py-1 rounded">sarah_mitchell</span> / 
             <span className="font-mono bg-gray-100 px-2 py-1 rounded ml-1">password123</span>
+            <span className="ml-2 text-xs text-gray-400">(Tourist)</span>
           </p>
         </div>
       </div>

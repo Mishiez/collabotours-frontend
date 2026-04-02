@@ -16,7 +16,8 @@ export const AuthProvider = ({ children }) => {
     const userData = localStorage.getItem('user');
     
     if (token && userData) {
-      setUser(JSON.parse(userData));
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
       // Set default axios header
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
@@ -35,14 +36,20 @@ export const AuthProvider = ({ children }) => {
       
       const { access, refresh } = response.data;
       
-      // Decode token to get user info (optional - you can also fetch user details)
-      // For now, we'll create a basic user object from the token payload
-      const tokenData = JSON.parse(atob(access.split('.')[1]));
+      // Fetch full user details with role from backend
+      const userResponse = await axios.get('http://127.0.0.1:8000/api/users/me/', {
+        headers: { Authorization: `Bearer ${access}` }
+      });
+      
+      const userData = userResponse.data;
       
       const userObj = {
-        id: tokenData.user_id,
-        username: username,
-        // You might want to fetch full user details from an endpoint
+        id: userData.id,
+        username: userData.username,
+        email: userData.email,
+        first_name: userData.first_name,
+        last_name: userData.last_name,
+        role: userData.profile?.role || 'tourist'
       };
       
       // Save to localStorage
@@ -54,7 +61,7 @@ export const AuthProvider = ({ children }) => {
       axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
       
       setUser(userObj);
-      return { success: true };
+      return { success: true, role: userObj.role };
       
     } catch (err) {
       console.error('Login error:', err);
