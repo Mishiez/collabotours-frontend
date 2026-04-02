@@ -141,8 +141,8 @@ export default function Dashboard() {
 
   // Get business name (username or first_name)
   const getBusinessName = () => {
-    if (user?.first_name) return user.first_name;
     if (user?.username) return user.username;
+    if (user?.first_name) return user.first_name;
     return 'Business Owner';
   };
 
