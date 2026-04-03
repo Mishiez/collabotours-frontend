@@ -42,7 +42,7 @@ export default function TouristPackageCard({
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <p className="text-xl font-bold text-[#EDAE49]">${price}</p>
+              <p className="text-xl font-bold text-[#EDAE49]">KSH {price}</p>
             </div>
           </div>
         </div>

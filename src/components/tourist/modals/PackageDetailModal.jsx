@@ -35,6 +35,20 @@ export default function PackageDetailModal({ isOpen, onClose, pkg }) {
           <p className="text-sm text-gray-600">{pkg.description || `Experience ${pkg.name} with this special package deal.`}</p>
         </div>
 
+        {/* Included Services - ADD THIS SECTION */}
+        {pkg.services && pkg.services.length > 0 && (
+          <div>
+            <h4 className="font-semibold text-[#003D5B] mb-2">Included Services</h4>
+            <div className="flex flex-wrap gap-2">
+              {pkg.services.map((service, idx) => (
+                <span key={idx} className="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-full">
+                  {service.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Details grid */}
         <div className="grid grid-cols-2 gap-3 bg-gray-50 p-4 rounded-xl">
           <div>
@@ -47,7 +61,7 @@ export default function PackageDetailModal({ isOpen, onClose, pkg }) {
           </div>
           <div>
             <p className="text-xs text-gray-400">Package Price</p>
-            <p className="font-bold text-[#EDAE49] text-lg">${pkg.price}</p>
+            <p className="font-bold text-[#EDAE49] text-lg">KSH {pkg.price}</p>
           </div>
         </div>
 
@@ -79,7 +93,7 @@ export default function PackageDetailModal({ isOpen, onClose, pkg }) {
           <div className="flex justify-between items-center pt-3 border-t border-gray-100">
             <div>
               <p className="text-sm text-gray-500">Total</p>
-              <p className="text-xl font-bold text-[#EDAE49]">${(parseFloat(pkg.price) * guests).toFixed(2)}</p>
+              <p className="text-xl font-bold text-[#EDAE49]">KSH {(parseFloat(pkg.price) * guests).toFixed(2)}</p>
             </div>
             <Button variant="primary" onClick={() => onClose()} disabled={!selectedDate}>
               Book Package

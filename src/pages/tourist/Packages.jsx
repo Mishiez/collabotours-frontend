@@ -114,15 +114,6 @@ export default function Packages() {
         <p className="text-gray-500">Bundle deals for better value on your Kenyan adventure</p>
       </div>
 
-      <button 
-        onClick={() => {
-          console.log('Test button clicked');
-          handleViewPackage({ name: 'test' });
-        }}
-        className="bg-red-500 text-white p-2 mb-4"
-      >
-        TEST BUTTON
-      </button>
 
       {/* Search Bar */}
       <div className="mb-6">
@@ -160,7 +151,7 @@ export default function Packages() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#EDAE49]/50 bg-white"
+            className="px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#EDAE49]/50 bg-gray"
           >
             {sortOptions.map(option => (
               <option key={option.value} value={option.value}>{option.label}</option>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';  // ADD THIS
 import TouristServiceCard from '../../components/tourist/TouristServiceCard';
 import ServiceDetailModal from '../../components/tourist/modals/ServiceDetailModal';
 import Button from '../../components/common/Button';
@@ -24,6 +25,8 @@ const sortOptions = [
 ];
 
 export default function Services() {
+  const location = useLocation();  // ADD THIS - to read URL parameters
+  
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -35,6 +38,21 @@ export default function Services() {
   // Modal state
   const [selectedService, setSelectedService] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // READ URL PARAMETERS ON PAGE LOAD
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const categoryParam = params.get('category');
+    const searchParam = params.get('search');
+    
+    if (categoryParam && categories.includes(categoryParam)) {
+      setSelectedCategory(categoryParam);
+    }
+    
+    if (searchParam) {
+      setSearchQuery(searchParam);
+    }
+  }, [location.search]);
 
   // Fetch services from backend
   useEffect(() => {

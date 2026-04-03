@@ -207,7 +207,7 @@ export default function Bookings() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-400">Total Paid</p>
-                    <p className="font-bold text-[#EDAE49]">KES {booking.amount}</p>
+                    <p className="font-bold text-[#EDAE49]">KSH {booking.amount}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-400">Booking ID</p>

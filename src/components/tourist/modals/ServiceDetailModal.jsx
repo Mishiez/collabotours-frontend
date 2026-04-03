@@ -70,7 +70,7 @@ export default function ServiceDetailModal({ isOpen, onClose, service }) {
             </div>
             <div>
               <p className="text-xs text-gray-400">Price per person</p>
-              <p className="font-bold text-[#EDAE49] text-lg">KES {service.price}</p>
+              <p className="font-bold text-[#EDAE49] text-lg">KSH {service.price}</p>
             </div>
           </div>
 
@@ -102,7 +102,7 @@ export default function ServiceDetailModal({ isOpen, onClose, service }) {
             <div className="flex justify-between items-center pt-3 border-t border-gray-100">
               <div>
                 <p className="text-sm text-gray-500">Total</p>
-                <p className="text-xl font-bold text-[#EDAE49]">KES {totalAmount.toFixed(2)}</p>
+                <p className="text-xl font-bold text-[#EDAE49]">KSH {totalAmount.toFixed(2)}</p>
               </div>
               <Button variant="primary" onClick={handleBookNow} disabled={!selectedDate}>
                 Book Now

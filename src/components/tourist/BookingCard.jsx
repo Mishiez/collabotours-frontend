@@ -77,7 +77,7 @@ export default function BookingCard({ booking, onViewDetails, onCancel, onContac
           {[
             { label: 'Travel Date', value: formatDate(booking.date) },
             { label: 'Guests', value: `${booking.guests} ${booking.guests === 1 ? 'person' : 'people'}` },
-            { label: 'Total Paid', value: `$${booking.amount}`, accent: true },
+            { label: 'Total Paid', value: `$ KES {booking.amount}`, accent: true },
             { label: 'Booking ID', value: booking.id, mono: true }
           ].map(({ label, value, accent, mono }) => (
             <div key={label}>

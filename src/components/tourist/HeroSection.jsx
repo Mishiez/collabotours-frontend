@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Button from '../common/Button';
 
-export default function HeroSection() {
+export default function HeroSection({ onSearch}) {
   const [searchLocation, setSearchLocation] = useState('');
   const [searchCategory, setSearchCategory] = useState('');
 
@@ -14,8 +14,9 @@ export default function HeroSection() {
   ];
 
   const handleSearch = () => {
-    console.log('Search:', { location: searchLocation, category: searchCategory });
-    // Will connect to backend later
+    if (onSearch) {
+      onSearch(searchLocation, searchCategory);
+    }
   };
 
   return (

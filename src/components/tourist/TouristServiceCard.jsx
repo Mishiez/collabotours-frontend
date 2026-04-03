@@ -55,7 +55,7 @@ export default function TouristServiceCard({
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-xs text-gray-400">Price per person</p>
-            <p className="text-2xl font-bold text-[#EDAE49]">${price}</p>
+            <p className="text-2xl font-bold text-[#EDAE49]">KSH {price}</p>
           </div>
         </div>
 
