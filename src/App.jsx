@@ -5,6 +5,7 @@ import BusinessLayout from './components/layout/BusinessLayout';
 import TouristLayout from './components/layout/TouristLayout';
 import Login from './pages/Login';
 import Register from './pages/business/Register';  // ADD THIS IMPORT
+import TouristRegister from './pages/tourist/Register';
 
 // Business pages
 import Dashboard from './pages/business/Dashboard';
@@ -30,7 +31,8 @@ export default function App() {
       <Routes>
         {/* Public routes - no authentication needed */}
         <Route path="/login" element={<Login />} />
-        <Route path="/business/register" element={<Register />} />  {/* ADD THIS LINE */}
+        <Route path="/business/register" element={<Register />} />
+        <Route path="/tourist/register" element={<TouristRegister />} />
 
         {/* Tourist routes - with TouristLayout */}
         <Route element={<TouristLayout />}>

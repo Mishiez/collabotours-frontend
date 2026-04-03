@@ -93,16 +93,20 @@ export default function Login() {
             className="w-full justify-center"
             disabled={isLoading}
           >
-            {isLoading ? 'Logging in...' : 'Login'}
+            {isLoading ? 'Logging in...' : 'Sign In'}
           </Button>
         </form>
         
         <div className="mt-6 text-center text-sm text-gray-400">
-          <p>Don't have an account?{' '}
-            <Link to="/business/register" className="text-[#EDAE49] hover:underline">
-              Register your business
+          <p>New here? Choose an account type:</p>
+          <div className="mt-2 space-y-2">
+            <Link to="/business/register" className="block text-[#EDAE49] hover:underline">
+              Register as a Business
             </Link>
-          </p>
+            <Link to="/tourist/register" className="block text-[#00798C] hover:underline">
+              Register as a Traveler
+            </Link>
+          </div>
           <p className="mt-4">Demo credentials:</p>
           <p className="mt-1">
             <span className="font-mono bg-gray-100 px-2 py-1 rounded">safari_kenya</span> / 
@@ -112,7 +116,7 @@ export default function Login() {
           <p className="mt-1">
             <span className="font-mono bg-gray-100 px-2 py-1 rounded">sarah_mitchell</span> / 
             <span className="font-mono bg-gray-100 px-2 py-1 rounded ml-1">password123</span>
-            <span className="ml-2 text-xs text-gray-400">(Tourist)</span>
+            <span className="ml-2 text-xs text-gray-400">(Traveler)</span>
           </p>
         </div>
       </div>

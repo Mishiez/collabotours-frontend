@@ -1,64 +1,76 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import Button from '../../components/common/Button';
-
-// Sample conversations for tourist
-const conversations = [
-  {
-    id: 1,
-    business: 'Safari Kenya',
-    avatar: 'SK',
-    lastMessage: 'Hello! Yes, we have availability for March 15th. Would you like to book?',
-    time: '10:30 AM',
-    unread: 1,
-    online: true,
-    type: 'business'
-  },
-  {
-    id: 2,
-    business: 'Beach Paradise',
-    avatar: 'BP',
-    lastMessage: 'Your booking has been confirmed. We look forward to hosting you!',
-    time: 'Yesterday',
-    unread: 0,
-    online: false,
-    type: 'business'
-  },
-  {
-    id: 3,
-    business: 'Cultural Tours',
-    avatar: 'CT',
-    lastMessage: 'The cooking class starts at 10 AM. Please arrive 15 minutes early.',
-    time: 'Mar 22',
-    unread: 0,
-    online: true,
-    type: 'business'
-  }
-];
-
-// Sample messages for selected conversation
-const sampleMessages = {
-  1: [
-    { id: 101, sender: 'tourist', text: "Hi, I'm interested in the Masai Mara Safari for March 15th. Do you have availability?', time: '10:15 AM" },
-    { id: 102, sender: 'business', text: 'Hello! Yes, we have availability for March 15th. Would you like to book?', time: '10:30 AM' },
-    { id: 103, sender: 'tourist', text: 'Yes please! It will be 2 people. What time does it start?', time: '10:32 AM' },
-    { id: 104, sender: 'business', text: 'The tour starts at 8 AM. We offer complimentary pickup from your hotel.', time: '10:35 AM' }
-  ]
-};
+import { fetchConversations, fetchConversation, sendMessage } from '../../services/api';
 
 export default function Messages() {
-  const [selectedConversation, setSelectedConversation] = useState(conversations[0]);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
+  const [conversations, setConversations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sending, setSending] = useState(false);
 
-  const filteredConversations = conversations.filter(conv =>
-    conv.business.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Load conversations on page load
+  useEffect(() => {
+    if (user) {
+      loadConversations();
+    }
+  }, [user]);
 
-  const handleSendMessage = () => {
-    if (!messageInput.trim()) return;
-    console.log('Sending message:', messageInput);
-    // Will connect to backend later
-    setMessageInput('');
+  const loadConversations = async () => {
+    try {
+      setLoading(true);
+      const response = await fetchConversations();
+      console.log('Conversations loaded:', response.data);
+      setConversations(response.data);
+      
+      // Select first conversation if available
+      if (response.data.length > 0) {
+        handleSelectConversation(response.data[0]);
+      }
+    } catch (err) {
+      console.error('Failed to load conversations:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSelectConversation = async (conversation) => {
+    setSelectedConversation(conversation);
+    
+    try {
+      // Fetch full conversation details with messages
+      const response = await fetchConversation(conversation.id);
+      console.log('Conversation details:', response.data);
+      setMessages(response.data.messages || []);
+    } catch (err) {
+      console.error('Failed to load messages:', err);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!messageInput.trim() || !selectedConversation) return;
+    
+    setSending(true);
+    try {
+      const response = await sendMessage(selectedConversation.id, messageInput);
+      console.log('Message sent:', response.data);
+      
+      // Add new message to the list
+      setMessages(prev => [...prev, response.data]);
+      setMessageInput('');
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      alert('Failed to send message. Please try again.');
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -67,6 +79,52 @@ export default function Messages() {
       handleSendMessage();
     }
   };
+
+  // Get the other participant's name (not the current user)
+  const getOtherParticipant = (conversation) => {
+    if (!conversation || !conversation.participants) return 'Unknown';
+    const other = conversation.participants.find(p => p.id !== user?.id);
+    return other?.username || 'Unknown';
+  };
+
+  const getAvatarInitials = (name) => {
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  const filteredConversations = conversations.filter(conv =>
+    getOtherParticipant(conv).toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // If user is not logged in, show login prompt
+  if (!user) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
+          <div className="text-6xl mb-4">💬</div>
+          <h2 className="text-2xl font-bold text-[#003D5B] mb-3">Stay connected with businesses</h2>
+          <p className="text-gray-500 mb-6 max-w-md mx-auto">
+            Log in to message tour operators, ask questions, and get quick responses about your bookings.
+          </p>
+          <div className="flex gap-4 justify-center">
+            <Button variant="primary" onClick={() => navigate('/login')}>
+              Log In
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/tourist/register')}>
+              Create Account
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8 text-center">
+        <p className="text-gray-500">Loading messages...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto h-[calc(100vh-120px)]">
@@ -91,37 +149,36 @@ export default function Messages() {
           {/* Conversations */}
           <div className="flex-1 overflow-y-auto">
             {filteredConversations.length > 0 ? (
-              filteredConversations.map((conv) => (
-                <button
-                  key={conv.id}
-                  onClick={() => setSelectedConversation(conv)}
-                  className={`w-full p-4 flex items-start gap-3 hover:bg-gray-50 transition-colors border-b border-gray-50 ${
-                    selectedConversation?.id === conv.id ? 'bg-[#EDAE49]/5' : ''
-                  }`}
-                >
-                  <div className="relative">
-                    <div className="w-12 h-12 rounded-xl bg-[#003D5B] flex items-center justify-center text-white font-bold text-sm">
-                      {conv.avatar}
+              filteredConversations.map((conv) => {
+                const otherName = getOtherParticipant(conv);
+                const lastMessage = conv.last_message?.content || 'No messages yet';
+                const lastMessageTime = conv.last_message?.created_at 
+                  ? new Date(conv.last_message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  : '';
+                
+                return (
+                  <button
+                    key={conv.id}
+                    onClick={() => handleSelectConversation(conv)}
+                    className={`w-full p-4 flex items-start gap-3 hover:bg-gray-50 transition-colors border-b border-gray-50 ${
+                      selectedConversation?.id === conv.id ? 'bg-[#EDAE49]/5' : ''
+                    }`}
+                  >
+                    <div className="relative">
+                      <div className="w-12 h-12 rounded-xl bg-[#003D5B] flex items-center justify-center text-white font-bold text-sm">
+                        {getAvatarInitials(otherName)}
+                      </div>
                     </div>
-                    {conv.online && (
-                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white"></div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className="font-semibold text-[#003D5B] truncate">{conv.business}</h3>
-                      <span className="text-xs text-gray-400 whitespace-nowrap ml-2">{conv.time}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start mb-1">
+                        <h3 className="font-semibold text-[#003D5B] truncate">{otherName}</h3>
+                        <span className="text-xs text-gray-400 whitespace-nowrap ml-2">{lastMessageTime}</span>
+                      </div>
+                      <p className="text-xs text-gray-600 truncate">{lastMessage}</p>
                     </div>
-                    <p className="text-xs text-gray-400 mb-1">Tour Operator</p>
-                    <p className="text-xs text-gray-600 truncate">{conv.lastMessage}</p>
-                  </div>
-                  {conv.unread > 0 && (
-                    <div className="w-5 h-5 rounded-full bg-[#EDAE49] text-[#003D5B] text-xs font-bold flex items-center justify-center">
-                      {conv.unread}
-                    </div>
-                  )}
-                </button>
-              ))
+                  </button>
+                );
+              })
             ) : (
               <div className="p-8 text-center">
                 <p className="text-sm text-gray-400">No conversations found</p>
@@ -138,39 +195,30 @@ export default function Messages() {
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <div className="w-10 h-10 rounded-xl bg-[#003D5B] flex items-center justify-center text-white font-bold text-sm">
-                    {selectedConversation.avatar}
+                    {getAvatarInitials(getOtherParticipant(selectedConversation))}
                   </div>
-                  {selectedConversation.online && (
-                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white"></div>
-                  )}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-[#003D5B]">{selectedConversation.business}</h3>
-                  <p className="text-xs text-gray-400">
-                    {selectedConversation.online ? 'Online' : 'Offline'}
-                  </p>
+                  <h3 className="font-semibold text-[#003D5B]">{getOtherParticipant(selectedConversation)}</h3>
                 </div>
               </div>
-              <button className="p-2 text-gray-400 hover:text-[#003D5B] transition-colors">
-                ℹ️
-              </button>
             </div>
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {(sampleMessages[selectedConversation.id] || []).map((msg) => (
+              {messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`flex ${msg.sender === 'tourist' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${msg.sender === user?.id ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
                     className={`max-w-[70%] rounded-2xl px-4 py-2 ${
-                      msg.sender === 'tourist'
+                      msg.sender === user?.id
                         ? 'bg-[#EDAE49] text-[#003D5B] rounded-tr-none'
                         : 'bg-gray-100 text-[#003D5B] rounded-tl-none'
                     }`}
                   >
-                    <p className="text-sm">{msg.text}</p>
+                    <p className="text-sm">{msg.content}</p>
                   </div>
                 </div>
               ))}
@@ -188,17 +236,11 @@ export default function Messages() {
                   className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#EDAE49]/20"
                 />
                 <button 
-                  className="p-3 text-gray-400 hover:text-[#003D5B] transition-colors"
-                  onClick={() => alert('File attachment coming soon!')}
-                >
-                  📎
-                </button>
-                <button 
                   className="p-3 bg-[#EDAE49] text-[#003D5B] rounded-xl hover:bg-[#e5a23e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={handleSendMessage}
-                  disabled={!messageInput.trim()}
+                  disabled={!messageInput.trim() || sending}
                 >
-                  ➤
+                  {sending ? '...' : '➤'}
                 </button>
               </div>
             </div>

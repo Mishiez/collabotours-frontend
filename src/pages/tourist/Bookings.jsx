@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';  // ADD THIS
 import Button from '../../components/common/Button';
 import BookingDetailModal from '../../components/tourist/modals/BookingDetailModal';
 import CancelBookingModal from '../../components/tourist/modals/CancelBookingModal';
@@ -36,6 +37,7 @@ const typeIcon = {
 
 export default function Bookings() {
   const { user } = useAuth();
+  const navigate = useNavigate();  // ADD THIS
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,6 +45,29 @@ export default function Bookings() {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+
+  // If user is not logged in, show login prompt
+  if (!user) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
+          <div className="text-6xl mb-4">✈️</div>
+          <h2 className="text-2xl font-bold text-[#003D5B] mb-3">See your trips in one place</h2>
+          <p className="text-gray-500 mb-6 max-w-md mx-auto">
+            Log in to view your bookings, manage trips, and leave reviews. Don't have an account? Create one for free.
+          </p>
+          <div className="flex gap-4 justify-center">
+            <Button variant="primary" onClick={() => navigate('/login')}>
+              Log In
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/tourist/register')}>
+              Create Account
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     loadBookings();
