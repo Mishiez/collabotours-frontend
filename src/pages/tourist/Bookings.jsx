@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';  // ADD THIS
+import { useNavigate } from 'react-router-dom';
 import Button from '../../components/common/Button';
 import BookingDetailModal from '../../components/tourist/modals/BookingDetailModal';
 import CancelBookingModal from '../../components/tourist/modals/CancelBookingModal';
@@ -36,8 +36,8 @@ const typeIcon = {
 };
 
 export default function Bookings() {
-  const { user } = useAuth();
-  const navigate = useNavigate();  // ADD THIS
+  const { user, loading: authLoading } = useAuth(); // ADD authLoading
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -46,7 +46,36 @@ export default function Bookings() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
-  // If user is not logged in, show login prompt
+  useEffect(() => {
+    if (user) {
+      loadBookings();
+    }
+  }, [user]);
+
+  const loadBookings = async () => {
+    try {
+      setLoading(true);
+      const response = await fetchBookings();
+      console.log('Bookings loaded:', response.data);
+      setBookings(response.data);
+    } catch (err) {
+      console.error('Failed to load bookings:', err);
+      setError('Could not load your bookings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Show loading while auth is being checked
+  if (authLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8 text-center">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
+
+  // If user is not logged in after auth is loaded, show login prompt
   if (!user) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -68,24 +97,6 @@ export default function Bookings() {
       </div>
     );
   }
-
-  useEffect(() => {
-    loadBookings();
-  }, []);
-
-  const loadBookings = async () => {
-    try {
-      setLoading(true);
-      const response = await fetchBookings();
-      console.log('Bookings loaded:', response.data);
-      setBookings(response.data);
-    } catch (err) {
-      console.error('Failed to load bookings:', err);
-      setError('Could not load your bookings');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Filter based on status only
   const upcomingBookings = bookings.filter(booking => 

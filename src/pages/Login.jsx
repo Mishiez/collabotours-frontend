@@ -107,17 +107,6 @@ export default function Login() {
               Register as a Traveler
             </Link>
           </div>
-          <p className="mt-4">Demo credentials:</p>
-          <p className="mt-1">
-            <span className="font-mono bg-gray-100 px-2 py-1 rounded">safari_kenya</span> / 
-            <span className="font-mono bg-gray-100 px-2 py-1 rounded ml-1">password123</span>
-            <span className="ml-2 text-xs text-gray-400">(Business)</span>
-          </p>
-          <p className="mt-1">
-            <span className="font-mono bg-gray-100 px-2 py-1 rounded">sarah_mitchell</span> / 
-            <span className="font-mono bg-gray-100 px-2 py-1 rounded ml-1">password123</span>
-            <span className="ml-2 text-xs text-gray-400">(Traveler)</span>
-          </p>
         </div>
       </div>
     </div>

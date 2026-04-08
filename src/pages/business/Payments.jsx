@@ -81,7 +81,7 @@ export default function Payments() {
 
   const getPaymentAmount = (payment) => {
     const amount = parseFloat(payment.amount) || 0;
-    return `$${amount.toFixed(2)}`;
+    return `Ksh ${amount.toFixed(2)}`;
   };
 
   const getPaymentMethod = (payment) => {
@@ -181,24 +181,6 @@ export default function Payments() {
           <h1 className="text-3xl font-bold text-[#003D5B]">Payments</h1>
           <p className="text-gray-400 text-sm mt-1">Track your revenue and payment history</p>
         </div>
-        <div className="flex gap-3">
-          <Button 
-            variant="outline" 
-            size="md" 
-            icon="📥"
-            onClick={() => setIsExportModalOpen(true)}
-          >
-            Export
-          </Button>
-          <Button 
-            variant="primary" 
-            size="md" 
-            icon="💰"
-            onClick={() => setIsPayoutModalOpen(true)}
-          >
-            Payout
-          </Button>
-        </div>
       </div>
 
       {/* Financial Summary */}
@@ -208,7 +190,7 @@ export default function Payments() {
           onClick={() => handleStatCardClick('All')}
         >
           <p className="text-xs text-gray-400 mb-2">Total Revenue</p>
-          <p className="text-3xl font-bold text-[#003D5B]">${totalRevenue.toFixed(2)}</p>
+          <p className="text-3xl font-bold text-[#003D5B]">Ksh {totalRevenue.toFixed(2)}</p>
           <p className="text-xs text-emerald-500 mt-2">↑ 8% from last {timeframe}</p>
         </div>
         <div 
@@ -216,7 +198,7 @@ export default function Payments() {
           onClick={() => handleStatCardClick('pending')}
         >
           <p className="text-xs text-gray-400 mb-2">Pending Payments</p>
-          <p className="text-3xl font-bold text-[#EDAE49]">${pendingAmount.toFixed(2)}</p>
+          <p className="text-3xl font-bold text-[#EDAE49]">Ksh {pendingAmount.toFixed(2)}</p>
           <p className="text-xs text-gray-400 mt-2">{payments.filter(p => p.status === 'pending').length} transactions</p>
         </div>
         <div 
