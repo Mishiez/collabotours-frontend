@@ -1,4 +1,5 @@
 import Button from '../common/Button';
+import VerifiedBadge from '../common/VerifiedBadge';
 
 export default function TouristServiceCard({ 
   id, 
@@ -10,6 +11,7 @@ export default function TouristServiceCard({
   rating, 
   duration, 
   location,
+  isVerified = false,  // ADD THIS
   onViewDetails 
 }) {
   return (
@@ -45,6 +47,7 @@ export default function TouristServiceCard({
       <div className="p-4">
         <div className="flex items-center justify-between mb-1">
           <p className="text-xs text-[#00798C] font-semibold uppercase tracking-wider">{category}</p>
+          <VerifiedBadge isVerified={isVerified} size="sm" />  {/* ADD THIS */}
           <p className="text-xs text-gray-400">{duration || 'Full day'}</p>
         </div>
         <h3 className="font-bold text-[#003D5B] text-lg mb-2 leading-tight">{name}</h3>

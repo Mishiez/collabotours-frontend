@@ -191,6 +191,7 @@ export default function Services() {
               business={service.business_name || 'Local Business'}
               location={service.location}
               description={service.description}
+              isVerified={service.business_is_verified || false}  // ADD THIS
               onViewDetails={() => handleViewService(service)}
             />
           ))}
